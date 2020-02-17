@@ -1,5 +1,30 @@
+
 (() => {
     jg = {};
+    jg.y = {}
+
+    /**
+     * Returns a array with values orders as like samples:
+     * range(5) -> [0,1,2,3,4]
+     * range(2,10) -> [2,3,4,5,6,7,8,9]
+     * range(2,10,2) -> [2,4,6,8]
+     * @param {number} n Min value of range
+     * @param {number} max Max value of range
+     * @param {number} step Increment of values
+     * If is sent one only param, this will represent the max value with step 1
+     */
+    //Retorna um vetor com os valores solicitados em sequencia
+    //Ex: 
+    jg.range = function (n, max, step) {
+        let min = max ? n : 0;
+        max = max || n;
+        step = step || 1;
+        var ret = []
+        for (var i = min; i < max; i += step) {
+            ret.push(i);
+        }
+        return ret;
+    }
 
     /**
      * This function returns a random value between min and max values
@@ -69,7 +94,7 @@
      */
     jg.chart_bar = function (data) {
 
-        chart = function (context) {
+        var chart = function (context) {
 
             //General parameters
             var transition = undefined;
@@ -79,9 +104,18 @@
             var selection = context.selection ? context.selection() : context;
             selection.classed("bar-chart", true).classed("bar-chart-" + chart.__counter, true);
             var size_info = jg.size_info(".bar-chart-" + chart.__counter)
-            var width = chart.width() || size_info.w,        //Width of Chart
-                height = chart.height() || size_info.h,      //Height of chart
+            chart.__size_info = size_info
+            selection.classed("bar-chart-" + chart.__counter, false);
+            var width = chart.width(),        //Width of Chart
+                height = chart.height(),      //Height of chart
                 margin = chart.margin()                      //Margin of chart
+            if (width < margin.left + margin.right + 40)
+                margin.right = 0, margin.left = -1;
+            if (height < margin.top + margin.bottom + 10)
+                margin.top = 1, margin.bottom = 3;
+            if (height < margin.top + margin.bottom + 2)
+                margin.top = 0, margin.bottom = 0;
+            chart.margin(margin);
             color = chart.color(),                       //Function to define color
                 key = chart.key(),                           //String of key
                 value = chart.value();                       //String of value
@@ -104,18 +138,14 @@
             else
                 g.attr("transform", `translate(${margin.left},${margin.top})`);
 
-            var w = width - margin.left - margin.right,
-                h = height - margin.top - margin.bottom;
+            var h = chart.y_range()[0];
 
-            var lastX = chart.__lastX;
-            var x = chart.x_scale() || d3.scaleBand().domain(chart.x_domain()).range(chart.x_range() || [0, w])
-                .paddingInner(0.1).paddingOuter(0.1),
-                y = chart.y_scale() || d3.scaleLinear().domain(chart.y_domain()).range(chart.y_range() || [h, 0]);
+            var x = chart.x_scale().range(chart.x_range())
+                ,
+                y = chart.y_scale().range(chart.y_range());
 
-            chart.__lastX = x;
-
-            var xAxis = chart.x_axis() || d3.axisBottom(x),
-                yAxis = chart.y_axis() || d3.axisLeft(y);
+            var xAxis = chart.x_axis().scale(x),
+                yAxis = chart.y_axis().scale(y);
 
             //Insert
             g.selectAll(".chart-axis").data([{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
@@ -132,8 +162,8 @@
                     .duration(transition.duration * 0.4)
                     .call(xAxis)
                     .attr("transform", `translate(0,${h})`);
-                yAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
-                    .duration(transition.duration * 0.4)
+                yAxisGroup.transition().delay(transition.delay + transition.duration * 0.7)
+                    .duration(transition.duration * 0.3)
                     .call(yAxis);
             } else {
                 xAxisGroup.call(xAxis)
@@ -145,13 +175,16 @@
             //Bars
             //Insert
             var bars = g.selectAll(".bar").data(chart.data()).enter().append("g").attr("class", "bar")
-                .attr("transform", function (d) { return `translate(${x(d[chart.key()])},${h})` })
-            bars.append("rect").attr("width", x.bandwidth());
+                .attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
+            bars.append("rect").attr("width", x.bandwidth()).attr("fill",color);
             //Remove
             bars = g.selectAll(".bar").data(chart.data()).exit();
             if (transition) {
+                var lastDomain = jg.range(bars._groups[0].length);
+                var lastX = chart.x_scale().domain(lastDomain).range(chart.x_range())
+
                 bars.transition().delay(transition.delay).duration(transition.duration * 0.3)
-                    .attr("transform", function (d) { return `translate(${lastX(d[chart.key()])},${h})` })
+                    .attr("transform", function (d, i) { return `translate(${lastX(i)},${h})` })
                     .select("rect").attr("height", 0).attr("y", 0);
                 bars.transition().delay(transition.delay + transition.duration * 0.3).remove()
             } else
@@ -160,15 +193,17 @@
             bars = g.selectAll(".bar").data(chart.data());
             if (transition) {
                 bars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-                    .attr("transform", function (d) { return `translate(${x(d[chart.key()])},${h})` })
+                    .attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
                     .select("rect").attr("width", x.bandwidth())
                 bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
-                    .select("rect").attr("height", function (d) { return h - y(d[chart.value()]) })
-                    .attr("y", function (d) { return y(d[chart.value()]) - h })
+                    .select("rect").attr("height", function (d) { return h - y(d[value]) })
+                    .attr("y", function (d) { return y(d[value]) - h })
+                    .attr("fill",color)
             } else {
-                bars.attr("transform", function (d) { return `translate(${x(d[chart.key()])},${h})` })
-                    .select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[chart.value()]) })
-                    .attr("y", function (d) { return y(d[chart.value()]) - h })
+                bars.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
+                    .select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[value]) })
+                    .attr("y", function (d) { return y(d[value]) - h })
+                    .attr("fill",color)
             }
 
 
@@ -203,14 +238,37 @@
                         jg.getRandom(10, 15))// max value
                         .map(function (d, i) { return { key: "d" + i, value: d } })
             }
-            return data ? this : this.__data;
+            return data!=undefined ? this : this.__data;
         }
-        //TODO
-        chart.width = function () { }
-        //TODO
-        chart.height = function () { }
 
-        chart.__margin = { top: 10, bottom: 20, left: 30, right: 10 }
+        chart.__width = undefined;
+        /**
+         * Define the width of graph
+         * @param {number} width
+         * @returns the self chart
+         */
+        chart.width = function (width) {
+            if (width != undefined) {
+                this.__width = width;
+                return this;
+            }
+            return this.__width || this.__size_info ? this.__size_info.w : undefined;
+        }
+        chart.__height = undefined;
+        /**
+         * Define the height of graph
+         * @param {number} height
+         * @returns the self chart
+         */
+        chart.height = function (height) {
+            if (height != undefined) {
+                this.__height = height;
+                return this;
+            }
+            return this.__height || this.__size_info ? this.__size_info.h : undefined;
+        }
+
+        chart.__margin = undefined
         /**
          * Defines a margin around the chart
          * @param {Object} send a object with params : top, bottom, left, right
@@ -227,33 +285,49 @@
                 this.__margin = t;
                 return this;
             }
-            return chart.__margin;
+            return chart.__margin || { top: 10, bottom: 20, left: 30, right: 10 };
         }
-        //TODO
-        chart.color = function () { }
-        chart.__key = "key"
+        chart.__color = undefined;
+        /**
+         * Set a color rule to bars. This can be a value of color or a function with data, index, dataset as param
+         * @param {Function,String} color The color rule to the bars
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current color rule
+         */
+        chart.color = function (color) {
+            if(color) {
+                this.__color = color;
+                return this;
+            }
+            return this.__color || "steelblue";
+        }
+        chart.__key = undefined
         /**
          * Set key index in dataset
          * @param {String} key Name of param in data set
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current key indexer
          */
         chart.key = function (key) {
             if (key) {
                 this.__key = key;
                 return this;
             }
-            return this.__key;
+            return this.__key || "key";
         }
-        chart.__value = "value"
+        chart.__value = undefined
         /**
          * Set value index in dataset
          * @param {String} value Name of param in data set
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current value indexer
          */
         chart.value = function (value) {
             if (value) {
                 this.__value = value;
                 return this;
             }
-            return this.__value;
+            return this.__value || "value";
         }
 
         chart.__x_scale = undefined;
@@ -268,7 +342,7 @@
                 this.__x_scale = scaleBand;
                 return this;
             } else
-                return chart.__x_scale;
+                return chart.__x_scale || d3.scaleBand().domain(chart.x_domain()).paddingInner(0.1).paddingOuter(0.1);
         }
 
         chart.__x_domain = undefined;
@@ -288,10 +362,35 @@
                     return d[a.key()]
                 })
         }
-        //TODO
-        chart.x_range = function () { }
-        //TODO
-        chart.x_axis = function () { }
+        chart.__x_range = undefined
+        /**
+         * Set range of x. This should be a Array of numbers
+         * @param {Array} range Fixed range to chart
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current x range of chart
+         */
+        chart.x_range = function (range) {
+            if (range) {
+                this.__x_range = range;
+                return this;    
+            }
+            return this.__x_range || [0, this.width() - this.margin().left - this.margin().right];
+        }
+
+        chart.__x_axis = undefined;
+        /**
+         * Set axis of x. This should be a d3.axis****()
+         * @param {Object} axis the d3.axis****()
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current x axis of chart
+         */
+        chart.x_axis = function (axis) {
+            if (axis) {
+                this.__x_axis = axis;
+                return this;
+            }
+            return this.__x_axis || d3.axisBottom();
+        }
 
         chart.__y_scale = undefined;
         /**
@@ -305,7 +404,7 @@
                 this.__y_scale = scaleLinear;
                 return this;
             } else
-                return chart.__y_scale;
+                return chart.__y_scale || d3.scaleLinear().domain(chart.y_domain());
         }
 
         chart.__y_domain = undefined;
@@ -326,10 +425,34 @@
                         return d[a.value()]
                     })
         }
-        //TODO
-        chart.y_range = function () { }
-        //TODO
-        chart.y_axis = function () { }
+        chart.__x_range = undefined
+        /**
+         * Set range of y. This should be a Array of numbers
+         * @param {Array} range Fixed range to chart
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current y range of chart
+         */
+        chart.y_range = function (range) {
+            if (range) {
+                this.__y_range = range;
+                return this;
+            }
+            return this.__y_range || [this.height() - this.margin().top - this.margin().bottom, 0];
+        }
+        chart.__y_axis = undefined;
+        /**
+         * Set axis of y. This should be a d3.axis****()
+         * @param {Object} axis the d3.axis****()
+         * @return the self chart
+         * If you dont sent a parameter, you will get the current y axis of chart
+         */
+        chart.y_axis = function (axis) {
+            if (axis) {
+                this.__y_axis = axis;
+                return this;
+            }
+            return this.__y_axis || d3.axisLeft();
+        }
 
         chart.data(data);
         chart.__counter = jg.__chart_bar_counter++;
@@ -337,6 +460,10 @@
         return chart;
     }
 
-    chart = jg.chart_bar();
+
 
 })()
+
+chart = jg.chart_bar();
+function repeat() { setTimeout(() => d3.select("#vis").transition().duration(2000).call(chart.data(true)).on("end", repeat), 1000) }
+repeat();
