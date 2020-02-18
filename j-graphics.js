@@ -86,6 +86,91 @@
         return {};
     }
 
+    jg.EventManager = class {
+        constructor() {
+            this.__events = [];
+            this.__event_counter = 0;
+        }
+        event(f, type, name) {
+            type = type || "click";
+
+            var event = {
+                __name: name,
+                __f: f,
+                __call: false
+            }
+
+            var index_type = -1;
+            this.__events.forEach((d, i) => {
+                if (d.__type == type)
+                    index_type = i;
+            })
+            if (index_type != -1) {
+                var index = -1;
+                this.__events[index_type].__handler.forEach((d, i) => {
+                    if (d.__name == name)
+                        index = i;
+                })
+                if (index != -1) {
+                    event.__id = this.__events[index_type].__handler[index].__id;
+                    this.__events[index_type].__handler[index] = event;
+                    return this;
+                }
+                event.__id = "e" + this.__event_counter++;
+                this.__events[index_type].__handler.push(event);
+                return this;
+            }
+            event.__id = "e" + this.__event_counter++;
+            this.__events.push({ __type: type, __handler: [event] })
+
+            return this;
+        }
+        get(name) {
+            var index = -1;
+            this.__events.forEach((d, i) => {
+                d.__handler.forEach((e, j) => {
+                    if (e.__name == name)
+                        index = [i, j];
+                })
+
+            })
+            if (index != -1) {
+                return this.__events[index[0]].__handler[index[1]];
+            }
+        }
+        drop(name){
+            var index = -1;
+            this.__events.forEach((d, i) => {
+                d.__handler.forEach((e, j) => {
+                    if (e.__name == name)
+                        index = [i, j];
+                })
+
+            })
+            if (index != -1) {
+                this.__events.__handler.splice(index, 1);
+            }
+            return this;
+        }
+        call() {
+            var manager = this;
+            return function (context) {
+                var selection = context.selection ? context.selection() : context;
+
+                manager.__events.forEach((event) => {
+                    for (var j = 0; j < event.__handler.length; j++) {
+                        event.__handler[j].__call = true;
+                    }
+                    selection.on(event.__type, function (d, i, e) {
+                        for (var j = 0; j < event.__handler.length; j++) {
+                            event.__handler[j].__f.call(this, d, i, e, this);
+                        }
+                    })
+                })
+            }
+        }
+    }
+
     jg.__chart_bar_counter = 0;
     /**
      * Create a bar chart send only the data set with the parameters key and value.
@@ -176,7 +261,7 @@
             //Insert
             var bars = g.selectAll(".bar").data(chart.data()).enter().append("g").attr("class", "bar")
                 .attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-            bars.append("rect").attr("width", x.bandwidth()).attr("fill",color);
+            bars.append("rect").attr("width", x.bandwidth()).attr("fill", color);
             //Remove
             bars = g.selectAll(".bar").data(chart.data()).exit();
             if (transition) {
@@ -189,8 +274,10 @@
                 bars.transition().delay(transition.delay + transition.duration * 0.3).remove()
             } else
                 bars.remove()
+
             //Update
-            bars = g.selectAll(".bar").data(chart.data());
+            bars = g.selectAll(".bar").data(chart.data())
+                .call(chart.__event_manager.call());
             if (transition) {
                 bars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
                     .attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
@@ -198,12 +285,12 @@
                 bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
                     .select("rect").attr("height", function (d) { return h - y(d[value]) })
                     .attr("y", function (d) { return y(d[value]) - h })
-                    .attr("fill",color)
+                    .attr("fill", color)
             } else {
                 bars.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
                     .select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[value]) })
                     .attr("y", function (d) { return y(d[value]) - h })
-                    .attr("fill",color)
+                    .attr("fill", color)
             }
 
 
@@ -238,7 +325,7 @@
                         jg.getRandom(10, 15))// max value
                         .map(function (d, i) { return { key: "d" + i, value: d } })
             }
-            return data!=undefined ? this : this.__data;
+            return data != undefined ? this : this.__data;
         }
 
         chart.__width = undefined;
@@ -295,7 +382,7 @@
          * If you dont sent a parameter, you will get the current color rule
          */
         chart.color = function (color) {
-            if(color) {
+            if (color) {
                 this.__color = color;
                 return this;
             }
@@ -372,7 +459,7 @@
         chart.x_range = function (range) {
             if (range) {
                 this.__x_range = range;
-                return this;    
+                return this;
             }
             return this.__x_range || [0, this.width() - this.margin().left - this.margin().right];
         }
@@ -454,6 +541,28 @@
             return this.__y_axis || d3.axisLeft();
         }
 
+        chart.__event_manager = new jg.EventManager();
+        /**
+         * Set a event function
+         * This function can recive allow parrameters:
+         * data, index, list, tag
+         * @param {String} type event type (click,mouseover,mouseout,...)
+         * @param {function} func functions to execute
+         * @param {String} name event name(use to retrive and drop the event)
+         */
+        chart.on = function(type,func,name){
+            this.__event_manager.event(func,type,name);
+            return this;
+        }
+        /**
+         * Drop a event using the event name
+         * @param {String} name event name
+         */
+        chart.drop_event = function(name){
+            this.__event_manager.drop(name);
+            return this;
+        }
+
         chart.data(data);
         chart.__counter = jg.__chart_bar_counter++;
 
@@ -464,6 +573,7 @@
 
 })()
 
-chart = jg.chart_bar();
+chart = jg.chart_bar().on("click",(d,i,e,t)=>{console.log([d,i,e,t])});
+
 function repeat() { setTimeout(() => d3.select("#vis").transition().duration(2000).call(chart.data(true)).on("end", repeat), 1000) }
 repeat();
