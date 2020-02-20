@@ -86,6 +86,213 @@
         return {};
     }
 
+    /*ToolTip: https://bl.ocks.org/d3noob/a22c42db65eb00d4e369*/
+    jg.__tooltip_counter = 0;
+    jg.tooltip = function(){
+        var tool = function(){
+            tool.selection(true);
+            return tool;
+        };
+
+        tool.__id = jg.__tooltip_counter++;
+
+        /**
+         * Get d3 selection to tooltip;
+         * @param {boolean} update send true to update paramns
+         */
+        tool.selection = function(update){
+            var temp = d3.select("body").selectAll(".tooltip-"+tool.__id).data([null]).enter().append("div")
+                .classed("tooltip-"+tool.__id,true)
+                .style("opacity", 0)
+            temp = d3.select(".tooltip-"+tool.__id)
+            var c = temp.attr("class") || "";
+            
+            c = c.split(" ").filter((d)=>!d.match(/tooltip(-[0-9]+)?/)).join(" ");
+            
+            temp.attr("class",(c+" tooltip tooltip-"+tool.__id).trim());
+            if(update){
+                temp.style("position","absolute")
+                    .style("text-align",this.align())
+                    .style("padding","5px")
+                    .style("font",this.font())
+                    .style("background",this.background())
+                    .style("border","0px")
+                    //.style("border-radius","8px")
+                    .style("pointer-events","none");
+            }
+            return d3.select(".tooltip-"+tool.__id);
+        }
+        
+        tool.__align = undefined;
+        /**
+         * Set align of text inner tooltip
+         * @param {String} align
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current align of tooltip
+         */
+        tool.align = function(align){
+            if(align){
+                this.__align = align;
+                return this;
+            }
+            return this.__align || "center";
+        }
+        tool.__orientation = undefined;
+        /**
+         * Set orientation relative to x,y position:
+         * top      -   left
+         * middle   -   center
+         * bottom   -   right
+         * choose in order: vertical-horizontal
+         * Sample: "top-left","bottom-right"
+         * @param {String} orientation
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current orientation of tooltip
+         */
+        tool.orientation = function(orientation){
+            if(orientation == true){
+                return this.__orientation;
+            }
+            if(orientation){
+                var m = orientation.match(/(top|middle|bottom)[ \t]*-[ \t]*(left|center|right)/);
+                if(m){
+                    this.__orientation = {v:m[1],h:m[2]}
+                }else{
+                    console.error("Orientation Out Format!");
+                }
+                return this;
+            }
+            return (this.__orientation.v+"-"+this.__orientation.h) || "top-left";
+        }
+        tool.__font = undefined;
+        /**
+         * Set font of text inner tooltip
+         * @param {String} font
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current font of tooltip
+         */
+        tool.font = function(font){
+            if(font){
+                this.__font = font;
+                return this;
+            }
+            return this.__font || "12px sans-serif";
+        }
+        tool.__background = undefined;
+        /**
+         * Set background of text inner tooltip
+         * @param {String} background
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current background of tooltip
+         */
+        tool.background = function(background){
+            if(background){
+                this.__background = background;
+                return this;
+            }
+            return this.__background || "lightsteelblue";
+        }
+        tool.__html = undefined;
+        /**
+         * Set content of html inner tooltip
+         * @param {String} html
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current html of tooltip
+         */
+        tool.html = function(html){
+            if(html){
+                this.__html = html;
+                return this;
+            }
+            return this.__html;
+        }
+        tool.__fadein = undefined;
+        /**
+         * Set content of fadein duration of tooltip
+         * @param {String} fadein
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current fadein duration of tooltip
+         */
+        tool.fadein = function(duration){
+            if(duration){
+                this.__fadein = duration;
+                return this;
+            }
+            return this.__fadein;
+        }
+        
+        tool.__fadeout = undefined;
+        /**
+         * Set content of fadeout duration of tooltip
+         * @param {String} fadeout
+         * @returns the self tooltip
+         * If you don't send a parameter, you will get the current fadeout duration of tooltip
+         */
+        tool.fadeout = function(duration){
+            if(duration){
+                this.__fadeout = duration;
+                return this;
+            }
+            return this.__fadeout;
+        }
+        /**
+         * Hide tooltip
+         * @param {number} duration time of fadeout (opitional)
+         * @returns the self tooltip
+         */
+        tool.hide = function(duration){
+            duration = duration || this.fadeout();
+            this.selection().transition()
+                .duration(duration)
+                .style("opacity", 0);
+            return self;
+        }
+        /**
+         * Show tooltip
+         * @param {number} x absolute x position on window
+         * @param {number} y absolute y position on window
+         * @param {number} duration time of fadein (opitional)
+         * @returns the self tooltip
+         * If don't send the position, this will be get position of event
+         *  in d3.event.pageX and d3.event.pageY
+         */
+        tool.show = function(x,y,duration){
+            duration = duration || this.fadein();
+            x  = x || d3.event.pageX;
+            y  = y || d3.event.pageY;
+            
+            this.selection().html(this.html());
+
+            //Set orientation
+            var size = jg.size_info(".tooltip-"+this.__id);
+            var o = this.orientation(true);
+
+            
+            
+            x -= size.w * (o.h=="left"?0:(o.h=="center"?0.5:1));
+            y -= size.h * (o.v=="top"?0:(o.v=="middle"?0.5:1));
+
+            //Normalizing to put in visible space
+            if(x<0)x=0;
+            if(y<0)y=0;
+            if(x+size.w>window.innerWidth)
+                x=window.innerWidth - size.w;
+            if(y+size.h>window.innerHeight)
+                y=window.innerHeight - size.h;
+
+            this.selection()
+                .style("left", `${x}px`)
+                .style("top", `${y}px`);
+
+            this.selection(true).transition()
+                .duration(duration)
+                .style("opacity", .9);
+
+            return self;
+        }
+        return tool
+    }
+
     jg.EventManager = class {
         constructor() {
             this.__events = [];
@@ -138,7 +345,7 @@
                 return this.__events[index[0]].__handler[index[1]];
             }
         }
-        drop(name){
+        drop(name) {
             var index = -1;
             this.__events.forEach((d, i) => {
                 d.__handler.forEach((e, j) => {
@@ -187,10 +394,10 @@
                 transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
             var selection = context.selection ? context.selection() : context;
-            selection.classed("bar-chart", true).classed("bar-chart-" + chart.__counter, true);
-            var size_info = jg.size_info(".bar-chart-" + chart.__counter)
+            selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
+            var size_info = jg.size_info(".bar-chart-" + chart.__id)
             chart.__size_info = size_info
-            selection.classed("bar-chart-" + chart.__counter, false);
+            selection.classed("bar-chart-" + chart.__id, false);
             var width = chart.width(),        //Width of Chart
                 height = chart.height(),      //Height of chart
                 margin = chart.margin()                      //Margin of chart
@@ -259,7 +466,7 @@
 
             //Bars
             //Insert
-            var bars = g.selectAll(".bar").data(chart.data()).enter().append("g").attr("class", "bar")
+            var bars = g.selectAll(".bar").data(chart.data()).enter().append("g").attr("class", (d,i)=>"bar bar-"+i)
                 .attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
             bars.append("rect").attr("width", x.bandwidth()).attr("fill", color);
             //Remove
@@ -279,7 +486,7 @@
             bars = g.selectAll(".bar").data(chart.data())
                 .call(chart.__event_manager.call());
             if (transition) {
-                bars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+                bars.interrupt().style("opacity",1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
                     .attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
                     .select("rect").attr("width", x.bandwidth())
                 bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
@@ -550,21 +757,47 @@
          * @param {function} func functions to execute
          * @param {String} name event name(use to retrive and drop the event)
          */
-        chart.on = function(type,func,name){
-            this.__event_manager.event(func,type,name);
+        chart.on = function (type, func, name) {
+            this.__event_manager.event(func, type, name);
             return this;
         }
         /**
          * Drop a event using the event name
          * @param {String} name event name
          */
-        chart.drop_event = function(name){
+        chart.drop_event = function (name) {
             this.__event_manager.drop(name);
             return this;
         }
 
+        chart.__tooltip = jg.tooltip();
+        chart.__tooltip_text = undefined;
+        /**
+         * Set text function to activate tooltip
+         * @param {String, Function} text
+         * 
+         */
+        chart.tooltip  = function(text){
+            if(text){
+                this.__tooltip.orientation("bottom-left");
+                this.on("mouseover",(d,i,e,t)=>{
+                    var p = t.getBoundingClientRect();
+                    chart.__tooltip.html(text instanceof Function? text(d,i,e,t): text)
+                        .show(p.x+p.width,p.y)
+                    d3.select(t).style("opacity",1.0).transition().style("opacity",0.7)
+                },"tooltip-in")
+                .on("mouseout",(d,i,e,t)=>{
+                    chart.__tooltip.hide();
+                    d3.select(t).transition().style("opacity",1)
+                },"tooltip-out")
+
+                return this;
+            }
+            return this.__tooltip;
+        }
+
         chart.data(data);
-        chart.__counter = jg.__chart_bar_counter++;
+        chart.__id = jg.__chart_bar_counter++;
 
         return chart;
     }
@@ -573,7 +806,8 @@
 
 })()
 
-chart = jg.chart_bar().on("click",(d,i,e,t)=>{console.log([d,i,e,t])});
+chart = jg.chart_bar().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+        .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.value}`});
 
 function repeat() { setTimeout(() => d3.select("#vis").transition().duration(2000).call(chart.data(true)).on("end", repeat), 1000) }
 repeat();
