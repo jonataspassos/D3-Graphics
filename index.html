@@ -11,5 +11,13 @@
     </head>
     <body>
         <div id="vis"></div>
+
+        <script>
+            chart = jg.chart_bar().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+                .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.value}`});
+
+            function repeat() { setTimeout(() => d3.select("#vis").transition().duration(2000).call(chart.data(true)).on("end", repeat), 1000) }
+            repeat();
+        </script>
     </body>
 </html>
