@@ -804,7 +804,7 @@
 
 		return chart;
 	}
-//TODO adaptar gráfico a partir daqui
+//TODO fazer labels
 	jg.__chart_tree_percent_counter = 0;
 	/**
 	 * Create a tree percent chart send only the data set with the parameters key and list.
@@ -812,7 +812,7 @@
 	 * @param {Array} data dataset with parameters key and list
 	 */
 	jg.chart_tree_percent = function (data) {
-// TODO por ultimo
+
 		var chart = function (context) {
 
 			//General parameters
@@ -852,46 +852,91 @@
 
 			var h = chart.y_range()[0];
 
+			var totals = [];
+			chart.data().map((d,i)=>{
+				totals.push(d[list].reduce((total, numero) => total + numero, 0));
+			});
+
 			var x = chart.x_scale().range(chart.x_range())
 				,
 				y = chart.y_scale().range(chart.y_range());
 
 			//Columns Tree
 			//Insert
-			var c_trees = g.selectAll(".c-tree").data(chart.data()).enter().append("g").attr("class", (d,i)=>"c-tree c-tree-"+i)
-				.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-			c_trees.append("rect").attr("width", x.bandwidth()).attr("fill", color);
+			var c_trees = g.selectAll(".c-tree").data(chart.data()).enter().append("g")
+				.attr("class", (d,i)=>"c-tree c-tree-"+i)
+				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity",0)
+			c_trees = g.selectAll(".c-tree").selectAll(".tree").data((d,col)=>d[list].map((d,i)=>{return {d:d,i:i,col:col}})).enter().append("g")
+				.attr("class", (d,i)=>`tree tree-${i}`)
+				.attr("transform", function (d,i) { return `translate(0,${y(i)})` }).style("opacity",0)
+				.selectAll("rect")
+				.data((d,i,e)=>{
+					return [
+					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
+					{d:d.d,i:d.i,e:e,x:x.bandwidth()*0.6,y:0,w:x.bandwidth()*0.4,h:y.bandwidth()},
+					//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
+					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
+				]}).enter().append("rect").attr("class",(d,i)=>`tree-rect tree-rect-${i}`).attr("width", (d)=>d.w)
+					.attr("height", (d)=>d.h).attr("x",(d)=>d.x).attr("y",(d)=>d.y).attr("fill", color);
+
 			//Remove
-			c_trees = g.selectAll(".bar").data(chart.data()).exit();
+			c_trees = g.selectAll(".c-tree").data(chart.data()).exit();
+			trees = g.selectAll(".c-tree").data(chart.data()).selectAll(".tree").data((d)=>d[list]).exit();
 			if (transition) {
-				var lastDomain = jg.range(c_trees._groups[0].length);
-				var lastX = chart.x_scale().domain(lastDomain).range(chart.x_range())
-
+				c_trees.style("opacity",1);
 				c_trees.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.attr("transform", function (d, i) { return `translate(${lastX(i)},${h})` })
-					.select("rect").attr("height", 0).attr("y", 0);
+					.style("opacity",0);
+				
 				c_trees.transition().delay(transition.delay + transition.duration * 0.3).remove()
-			} else
-				c_trees.remove()
 
+				trees.style("opacity",1);
+				trees.transition().delay(transition.delay).duration(transition.duration * 0.3)
+					.style("opacity",0);
+				
+				trees.transition().delay(transition.delay + transition.duration * 0.3).remove()
+			} else
+				c_trees.remove(),trees.remove()
+			
 			//Update
-			c_trees = g.selectAll(".bar").data(chart.data())
+			c_trees = g.selectAll(".c-tree").data(chart.data())
+			trees = c_trees.selectAll(".tree").data((d,col)=>d[list].map((e,i)=>{return {d:e,i:i,col:col,key:d[key]}}))
 				.call(chart.__event_manager.call());
+			var rects_trees = trees.selectAll("rect").data((d,i,e)=>{
+					return [
+					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
+					{d:d.d,i:d.i,e:e,x:x.bandwidth()*0.6,y:0,w:x.bandwidth()*0.4,h:y.bandwidth()},
+					//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
+					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
+				]})
 			if (transition) {
-				c_trees.interrupt().style("opacity",1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-					.select("rect").attr("width", x.bandwidth())
-				c_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
-					.select("rect").attr("height", function (d) { return h - y(d[list]) })
-					.attr("y", function (d) { return y(d[list]) - h })
-					.attr("fill", color)
+				c_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1);
+				trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+					.attr("transform", function (d) { return `translate(0,${y(d.i)})` }).style("opacity",1);
+
+				rects_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+					.attr("width", (d)=>d.w).attr("height", (d)=>d.h)
+					.attr("x",(d)=>d.x).attr("y",(d)=>d.y);
+
+				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
+					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
+					.attr("fill", color);
 			} else {
-				c_trees.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-					.select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[list]) })
-					.attr("y", function (d) { return y(d[list]) - h })
+				c_trees
+					.attr("transform", function (d) { return `translate(${x(d.key)},0)` })
+					.style("opacity",1);
+				trees
+					.attr("transform", function (d) { return `translate(0,${y(d.i)})` })
+					.style("opacity",1);
+
+				rects_trees
+					.attr("width", (d)=>d.w)
+					.attr("x",(d)=>d.x)
+					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
+					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
 					.attr("fill", color)
 			}
-
 
 		}
 
@@ -973,23 +1018,40 @@
 				this.__margin = t;
 				return this;
 			}
-			return chart.__margin || { top: 10, bottom: 20, left: 30, right: 10 };
+			return chart.__margin || { top: 5, bottom: 5, left: 5, right: 5 };
 		}
 		chart.__color = undefined;
 		/**
 		 * Set a color rule to pattern of the tree to define the lines of tree.
 		 * This can be a value of color or a function with 
 		 * data(number), index(line), dataset(list of column) as param
-		 * @param {Function,String} color The color rule to pattern of the tree
+		 * @param {Function,String,Array} color The color rule to pattern of the tree
+		 * @param {boolean} control when true, give total control to param color (be function, String or array)
 		 * @return the self chart
 		 * If you dont sent a parameter, you will get the current color rule
 		 */
-		chart.color = function (color) {
+		chart.color = function (color,control) {
 			if (color) {
-				this.__color = color;
+				if(control){
+					this.__color = color;
+					return this;
+				}
+				this.__color = function(d,i){
+					var c;
+					if(color instanceof Function)
+						c = color(d.d,d.i,d.e,d.t);
+					else if(color instanceof Array)
+						c = color[d.i];
+					else	
+						c = color;
+					return (d3.scaleLinear().domain([0,6]).range(["white",c]))(i+3);
+				}
 				return this;
 			}
-			return this.__color || "steelblue";
+			return this.__color || function(d,i,e){
+				
+				return (d3.scaleLinear().domain([0,6]).range(["white","steelblue"]))(i+3);
+			};
 		}
 		chart.__key = undefined
 		/**
@@ -1032,7 +1094,8 @@
 				this.__x_scale = scaleBand;
 				return this;
 			} else
-				return chart.__x_scale || d3.scaleBand().domain(chart.x_domain()).paddingInner(0.1).paddingOuter(0.1);
+				return chart.__x_scale || d3.scaleBand().domain(chart.x_domain())
+					.paddingInner(0.1)//.paddingOuter(0.1);
 		}
 
 		chart.__x_domain = undefined;
@@ -1081,7 +1144,8 @@
 				this.__y_scale = scaleBand;
 				return this;
 			} else
-				return chart.__y_scale || d3.scaleBand().domain(chart.y_domain());
+				return chart.__y_scale || d3.scaleBand().domain(chart.y_domain())
+					.paddingInner(0.1).paddingOuter(0.01);
 		}
 
 		chart.__y_domain = undefined;
@@ -1097,12 +1161,12 @@
 				if (domain instanceof Array)
 					this.__y_domain = domain;
 			} return this.__y_domain ||
-				[0,
+				jg.range(
 				d3.max(this.data(),
 					function (d) {
-						return d[a.list()].length-1
+						return d[a.list()].length
 					})
-				]
+				)
 		}
 		chart.__y_range = undefined
 		/**
@@ -1116,7 +1180,7 @@
 				this.__y_range = range;
 				return this;
 			}
-			return this.__y_range || [this.height() - this.margin().top - this.margin().bottom, 0];
+			return this.__y_range || [0, this.height() - this.margin().top - this.margin().bottom];
 		}
 
 		chart.__event_manager = new jg.EventManager();
