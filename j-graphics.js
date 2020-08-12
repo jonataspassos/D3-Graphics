@@ -869,7 +869,7 @@
 				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity",0)
 
 			c_trees.append("text").attr("class",(d,i)=>`key-label key-label-+${i}`)
-				.attr("font-size",y.bandwidth()*0.16)
+				//.attr("font-size",y.bandwidth()*0.16)
 				.attr("text-anchor","middle")
 				.attr("font-family","Roboto")
 				.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
@@ -945,7 +945,7 @@
 				c_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
 					.select(".key-label")
-					.attr("font-size",y.bandwidth()*0.16)
+					//.attr("font-size",y.bandwidth()*0.16)
 					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
 						.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
 				trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
@@ -959,26 +959,27 @@
 					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
 					.attr("dy","0.35em")
+					.attr("font-size",y.bandwidth()*0.4)
 					.tween("text", function() {
 						var i = d3.interpolate(this.textContent, 0);
 						return function(t) {
 							this.textContent = Math.round(i(t));
 						};
 					})
-					.attr("font-size",y.bandwidth()*0.4)
 					.style("opacity",0);
 				
 				trees.select(".tree-relative-label")
 					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
 					.attr("dy","0.5em")
+					.attr("font-size",y.bandwidth()*0.16)
 					.tween("text", function(d) {
 						var i = d3.interpolate(this.textContent.match(/\d*/)[0]/100, 0);
 						return function(t) {
 							this.textContent = format(i(t));
 						};
 					})
-					.attr("font-size",y.bandwidth()*0.16)
+					
 					.style("opacity",0);
 
 				// transition 3 - data content
@@ -1012,9 +1013,6 @@
 					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
 					.style("opacity",1);
 
-				/*
-				
-				*/
 			} else {
 				c_trees
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` })
@@ -1029,6 +1027,21 @@
 					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
 					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
 					.attr("fill", color)
+				c_trees.select(".key-label")
+					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
+					.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
+				trees.select(".tree-absolute-label")
+					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
+					.attr("dy","0.35em")
+					.attr("font-size",y.bandwidth()*0.4)
+					.style("opacity",1);
+				trees.select(".tree-relative-label")
+					.attr("x",x.bandwidth()*(0.6 + 0.4/2))
+					.attr("y",(d,i)=>(1-d.d/totals[d.col]/(((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?1:2))*y.bandwidth())
+					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
+					.attr("font-size",y.bandwidth()*0.16)
+					.style("opacity",1);
+
 			}
 
 		}
@@ -1111,7 +1124,7 @@
 				this.__margin = t;
 				return this;
 			}
-			return chart.__margin || { top: 40, bottom: 5, left: 5, right: 5 };
+			return chart.__margin || { top: 20, bottom: 5, left: 5, right: 5 };
 		}
 		chart.__color = undefined;
 		/**
