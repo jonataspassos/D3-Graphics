@@ -831,7 +831,7 @@
 				color = chart.color(),					   //Function to define color
 				key = chart.key(),						   //String of key
 				list = chart.list();					   //String of list
-
+			
 			//Tags
 			//Insert
 			selection.selectAll("svg").data([null]).enter().append("svg")
@@ -859,17 +859,27 @@
 
 			var x = chart.x_scale().range(chart.x_range())
 				,
-				y = chart.y_scale().range(chart.y_range());
+				y = chart.y_scale().range(chart.y_range()),
+				format = d3.format(".0%");
 
 			//Columns Tree
 			//Insert
 			var c_trees = g.selectAll(".c-tree").data(chart.data()).enter().append("g")
 				.attr("class", (d,i)=>"c-tree c-tree-"+i)
 				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity",0)
+
+			c_trees.append("text").attr("class",(d,i)=>`key-label key-label-+${i}`)
+				.attr("font-size",y.bandwidth()*0.16)
+				.attr("text-anchor","middle")
+				.attr("font-family","Roboto")
+				.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
+				.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",0);
+
 			c_trees = g.selectAll(".c-tree").selectAll(".tree").data((d,col)=>d[list].map((d,i)=>{return {d:d,i:i,col:col}})).enter().append("g")
 				.attr("class", (d,i)=>`tree tree-${i}`)
 				.attr("transform", function (d,i) { return `translate(0,${y(i)})` }).style("opacity",0)
-				.selectAll("rect")
+				
+			c_trees.selectAll("rect")
 				.data((d,i,e)=>{
 					return [
 					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
@@ -878,6 +888,24 @@
 					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
 				]}).enter().append("rect").attr("class",(d,i)=>`tree-rect tree-rect-${i}`).attr("width", (d)=>d.w)
 					.attr("height", (d)=>d.h).attr("x",(d)=>d.x).attr("y",(d)=>d.y).attr("fill", color);
+			c_trees.append("text").attr("class",(d,i)=>`tree-absolute-label tree-absolute-label-${d.i}`)
+				.attr("text-anchor","middle")
+				.attr("fill","white")
+				.attr("font-weight","bold")
+				.attr("font-family","Roboto")
+				.text((d)=>d.d)
+				.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2).attr("dy","0.8em")
+				.style("opacity",0);
+			c_trees.append("text").attr("class",(d,i)=>`tree-relative-label tree-relative-label-${d.i}`)
+				.attr("text-anchor","middle")
+				.attr("font-size",12)
+				.attr("fill","white")
+				.attr("font-family","Roboto")
+				.attr("font-weight","bold")
+				.text((d)=>`${parseInt(d.d*100/totals[d.col])}%`)
+				.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
+				.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=14)?"-0.5em":"0.8em")
+				.style("opacity",0);
 
 			//Remove
 			c_trees = g.selectAll(".c-tree").data(chart.data()).exit();
@@ -909,8 +937,17 @@
 					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
 				]})
 			if (transition) {
+				// transition 1 - fade out
+				c_trees.transition().delay(transition.delay + transition.duration * 0.15).duration(transition.duration * 0.15)
+					.select(".key-label")
+					.style("opacity",0);
+				// transition 2 - position
 				c_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1);
+					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
+					.select(".key-label")
+					.attr("font-size",y.bandwidth()*0.16)
+					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
+						.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
 				trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(0,${y(d.i)})` }).style("opacity",1);
 
@@ -918,10 +955,66 @@
 					.attr("width", (d)=>d.w).attr("height", (d)=>d.h)
 					.attr("x",(d)=>d.x).attr("y",(d)=>d.y);
 
+				trees.select(".tree-absolute-label")
+					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
+					.attr("dy","0.35em")
+					.tween("text", function() {
+						var i = d3.interpolate(this.textContent, 0);
+						return function(t) {
+							this.textContent = Math.round(i(t));
+						};
+					})
+					.attr("font-size",y.bandwidth()*0.4)
+					.style("opacity",0);
+				
+				trees.select(".tree-relative-label")
+					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+					.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
+					.attr("dy","0.5em")
+					.tween("text", function(d) {
+						var i = d3.interpolate(this.textContent.match(/\d*/)[0]/100, 0);
+						return function(t) {
+							this.textContent = format(i(t));
+						};
+					})
+					.attr("font-size",y.bandwidth()*0.16)
+					.style("opacity",0);
+
+				// transition 3 - data content
 				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
 					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
 					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
 					.attr("fill", color);
+
+				trees.select(".tree-absolute-label")
+					.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+					.tween("text", function(d) {
+						var i = d3.interpolate(this.textContent, d.d);
+						return function(t) {
+							this.textContent = Math.round(i(t));
+						};
+					})
+					.style("opacity",1);
+					
+
+				
+				trees.select(".tree-relative-label")
+				.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+					.tween("text", function(d) {
+						var i = d3.interpolate(0, d.d/totals[d.col]);
+						return function(t) {
+							this.textContent = format(i(t));
+						};
+					})
+					.attr("x",x.bandwidth()*(0.6 + 0.4/2))
+					.attr("y",(d,i)=>(1-d.d/totals[d.col]/(((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?1:2))*y.bandwidth())
+					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
+					.style("opacity",1);
+
+				/*
+				
+				*/
 			} else {
 				c_trees
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` })
@@ -1018,7 +1111,7 @@
 				this.__margin = t;
 				return this;
 			}
-			return chart.__margin || { top: 5, bottom: 5, left: 5, right: 5 };
+			return chart.__margin || { top: 40, bottom: 5, left: 5, right: 5 };
 		}
 		chart.__color = undefined;
 		/**
