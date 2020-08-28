@@ -21,13 +21,13 @@
                 {key:"Estudantes", list:[536,358]},
             ]
             //*
-            chart = jg.chart_tree_percent().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+            chart = jg.chart_bar().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
                 .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
-                .color(["#4f9887","#922717","steelblue","black","green"]);
+                //.color(["#4f9887","#922717","steelblue","black","green"]);
 
             
             function repeat() {
-                setTimeout(() => d3.select("#vis").transition().duration(2000).call(chart.data(true)).on("end", repeat), 1000) 
+                setTimeout(() => d3.select("#vis").transition().duration(2000).ease(d3.easeBounce).call(chart.data(true)).on("end", repeat), 1000) 
             }
             repeat();/**/
             //setInterval(() => d3.select("#vis").call(chart.data(true)).on("end", repeat), 3000)

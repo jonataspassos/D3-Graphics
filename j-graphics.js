@@ -490,7 +490,7 @@
 				bars.interrupt().style("opacity",1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
 					.select("rect").attr("width", x.bandwidth())
-				bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+				bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
 					.select("rect").attr("height", function (d) { return h - y(d[value]) })
 					.attr("y", function (d) { return y(d[value]) - h })
 					.attr("fill", color)
@@ -983,13 +983,13 @@
 					.style("opacity",0);
 
 				// transition 3 - data content
-				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
 					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
 					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
 					.attr("fill", color);
 
 				trees.select(".tree-absolute-label")
-					.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+					.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
 					.tween("text", function(d) {
 						var i = d3.interpolate(this.textContent, d.d);
 						return function(t) {
@@ -1001,7 +1001,7 @@
 
 				
 				trees.select(".tree-relative-label")
-				.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+				.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
 					.tween("text", function(d) {
 						var i = d3.interpolate(0, d.d/totals[d.col]);
 						return function(t) {
@@ -1359,10 +1359,10 @@
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			selection.classed("tree_percent-chart", true).classed("tree_percent-chart-" + chart.__id, true);
-			var size_info = jg.size_info(".tree_percent-chart-" + chart.__id)
+			selection.classed("tree_percent-chart", true).classed("stack_group_bar-chart-" + chart.__id, true);
+			var size_info = jg.size_info(".stack_group_bar-chart-" + chart.__id)
 			chart.__size_info = size_info
-			selection.classed("tree_percent-chart-" + chart.__id, false);
+			selection.classed("stack_group_bar-chart-" + chart.__id, false);
 			var width = chart.width(),		//Width of Chart
 				height = chart.height(),	  //Height of chart
 				margin = chart.margin(),					  //Margin of chart
@@ -1765,6 +1765,21 @@
 			return this.__x_range || [0, this.width() - this.margin().left - this.margin().right];
 		}
 
+		chart.__x_axis = undefined;
+		/**
+		 * Set axis of x. This should be a d3.axis****()
+		 * @param {Object} axis the d3.axis****()
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current x axis of chart
+		 */
+		chart.x_axis = function (axis) {
+			if (axis) {
+				this.__x_axis = axis;
+				return this;
+			}
+			return this.__x_axis || d3.axisBottom();
+		}
+
 		chart.__y_scale = undefined;
 		/**
 		 * Set the y scale of the chart. this should be a scaleLinear
@@ -1813,6 +1828,21 @@
 				return this;
 			}
 			return this.__y_range || [0, this.height() - this.margin().top - this.margin().bottom];
+		}
+
+		chart.__y_axis = undefined;
+		/**
+		 * Set axis of y. This should be a d3.axis****()
+		 * @param {Object} axis the d3.axis****()
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current y axis of chart
+		 */
+		chart.y_axis = function (axis) {
+			if (axis) {
+				this.__y_axis = axis;
+				return this;
+			}
+			return this.__y_axis || d3.axisLeft();
 		}
 
 		chart.__event_manager = new jg.EventManager();
