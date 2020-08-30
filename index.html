@@ -14,33 +14,36 @@
         <div id="vis"></div>
 
         <script>
-            var color_vec = ["#9ed5cf","#5eb6aa","#4f9887","#d3989c","#b14954","#922717"];
-
-            var data = [
-                {key:"Professores", list:[63,21]},
-                {key:"Estudantes", list:[536,358]},
-            ]
             //*
-            chart = jg.chart_bar().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+            chart = jg.chart_stack_group_bar().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
                 .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
                 //.color(["#4f9887","#922717","steelblue","black","green"]);
 
-            
+            /*
             function repeat() {
                 setTimeout(() => d3.select("#vis").transition().duration(2000).ease(d3.easeBounce).call(chart.data(true)).on("end", repeat), 1000) 
             }
             repeat();/**/
+
+            d3.select("#vis").transition().duration(2000).call(chart);
+
             //setInterval(() => d3.select("#vis").call(chart.data(true)).on("end", repeat), 3000)
 
+
             /*
+            var data = [
+                {key:"Professores", list:[63,21]},
+                {key:"Estudantes", list:[536,358]},
+            ]
+
+            var color_vec = ["#9ed5cf","#5eb6aa","#4f9887","#d3989c","#b14954","#922717"];
+
             chart = jg.chart_tree_percent().data(data)
                 .on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
                 .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
                 .color(function(d,i){
                     return color_vec[d.i*3+i];
                 },true);
-            d3.select("#vis").transition().duration(2000)
-                .call(chart);
 
             window.addEventListener('resize', function(){
                 d3.select("#vis").transition().duration(2000)

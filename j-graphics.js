@@ -1359,7 +1359,7 @@
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			selection.classed("tree_percent-chart", true).classed("stack_group_bar-chart-" + chart.__id, true);
+			selection.classed("tree_stack_group_bar", true).classed("stack_group_bar-chart-" + chart.__id, true);
 			var size_info = jg.size_info(".stack_group_bar-chart-" + chart.__id)
 			chart.__size_info = size_info
 			selection.classed("stack_group_bar-chart-" + chart.__id, false);
@@ -1370,6 +1370,15 @@
 				key = chart.key(),						   //String of key
 				list = chart.list();					   //String of list
 			
+				if (width < margin.left + margin.right + 40)
+				margin.right = 0, margin.left = -1;
+			if (height < margin.top + margin.bottom + 10)
+				margin.top = 1, margin.bottom = 3;
+			if (height < margin.top + margin.bottom + 2)
+				margin.top = 0, margin.bottom = 0;
+			// TODO vai mas não volta - corrigir depois (eixos)
+			chart.margin(margin);
+
 			//Tags
 			//Insert
 			selection.selectAll("svg").data([null]).enter().append("svg")
@@ -1390,60 +1399,59 @@
 
 			var h = chart.y_range()[0];
 
-			var totals = [];
-			chart.data().map((d,i)=>{
-				totals.push(d[list].reduce((total, numero) => total + numero, 0));
-			});
-
 			var x = chart.x_scale().range(chart.x_range())
 				,
-				y = chart.y_scale().range(chart.y_range()),
-				format = d3.format(".0%");
+				y = chart.y_scale().range(chart.y_range());
+			
+			var xAxis = chart.x_axis().scale(x),
+				yAxis = chart.y_axis().scale(y);
 
+			var totals = [];
+			var xAxisGroup = [];
+			chart.data().map((d,i)=>{
+				totals.push(d[list].reduce((total, numero) => total + numero, 0));
+				xAxisGroup.push(d3.scaleBand().domain(d[list]).range([0,x.bandwidth()]));
+			});
+
+			console.log([chart.data(),totals,xAxisGroup])
+
+			//Insert
+			g.selectAll(".chart-axis").data([{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
+				.attr("class", function (d) { return "chart-axis chart-axis-" + d.k })
+				.attr("transform", function (d) { if (d.k == "x") return `translate(0,${h})` });
+
+			//Update
+			var xAxisGroup = g.select(".chart-axis-x"),
+				yAxisGroup = g.select(".chart-axis-y")
+
+			//Conditional Transition
+			if (transition) {
+				xAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
+					.duration(transition.duration * 0.4)
+					.call(xAxis)
+					.attr("transform", `translate(0,${h})`);
+				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.7)
+					.duration(transition.duration * 0.3)
+					.call(yAxis);
+			} else {
+				xAxisGroup.call(xAxis)
+					.attr("transform", `translate(0,${h})`);
+				yAxisGroup
+					.call(yAxis);
+			}
+			/*
 			//Columns Tree
 			//Insert
 			var c_trees = g.selectAll(".c-tree").data(chart.data()).enter().append("g")
 				.attr("class", (d,i)=>"c-tree c-tree-"+i)
 				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity",0)
 
-			c_trees.append("text").attr("class",(d,i)=>`key-label key-label-+${i}`)
-				//.attr("font-size",y.bandwidth()*0.16)
-				.attr("text-anchor","middle")
-				.attr("font-family","Roboto")
-				.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
-				.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",0);
-
 			c_trees = g.selectAll(".c-tree").selectAll(".tree").data((d,col)=>d[list].map((d,i)=>{return {d:d,i:i,col:col}})).enter().append("g")
 				.attr("class", (d,i)=>`tree tree-${i}`)
 				.attr("transform", function (d,i) { return `translate(0,${y(i)})` }).style("opacity",0)
 				
-			c_trees.selectAll("rect")
-				.data((d,i,e)=>{
-					return [
-					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
-					{d:d.d,i:d.i,e:e,x:x.bandwidth()*0.6,y:0,w:x.bandwidth()*0.4,h:y.bandwidth()},
-					//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
-					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
-				]}).enter().append("rect").attr("class",(d,i)=>`tree-rect tree-rect-${i}`).attr("width", (d)=>d.w)
+			c_trees.append("rect").attr("class",(d,i)=>`tree-rect tree-rect-${i}`).attr("width", (d)=>d.w)
 					.attr("height", (d)=>d.h).attr("x",(d)=>d.x).attr("y",(d)=>d.y).attr("fill", color);
-			c_trees.append("text").attr("class",(d,i)=>`tree-absolute-label tree-absolute-label-${d.i}`)
-				.attr("text-anchor","middle")
-				.attr("fill","white")
-				.attr("font-weight","bold")
-				.attr("font-family","Roboto")
-				.text((d)=>d.d)
-				.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2).attr("dy","0.8em")
-				.style("opacity",0);
-			c_trees.append("text").attr("class",(d,i)=>`tree-relative-label tree-relative-label-${d.i}`)
-				.attr("text-anchor","middle")
-				.attr("font-size",12)
-				.attr("fill","white")
-				.attr("font-family","Roboto")
-				.attr("font-weight","bold")
-				.text((d)=>`${parseInt(d.d*100/totals[d.col])}%`)
-				.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
-				.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=14)?"-0.5em":"0.8em")
-				.style("opacity",0);
 
 			//Remove
 			c_trees = g.selectAll(".c-tree").data(chart.data()).exit();
@@ -1467,18 +1475,11 @@
 			c_trees = g.selectAll(".c-tree").data(chart.data())
 			trees = c_trees.selectAll(".tree").data((d,col)=>d[list].map((e,i)=>{return {d:e,i:i,col:col,key:d[key]}}))
 				.call(chart.__event_manager.call());
-			var rects_trees = trees.selectAll("rect").data((d,i,e)=>{
-					return [
-					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
-					{d:d.d,i:d.i,e:e,x:x.bandwidth()*0.6,y:0,w:x.bandwidth()*0.4,h:y.bandwidth()},
-					//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
-					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
-				]})
+			
 			if (transition) {
 				// transition 1 - fade out
 				c_trees.transition().delay(transition.delay + transition.duration * 0.15).duration(transition.duration * 0.15)
-					.select(".key-label")
-					.style("opacity",0);
+					
 				// transition 2 - position
 				c_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
@@ -1493,63 +1494,11 @@
 					.attr("width", (d)=>d.w).attr("height", (d)=>d.h)
 					.attr("x",(d)=>d.x).attr("y",(d)=>d.y);
 
-				trees.select(".tree-absolute-label")
-					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
-					.attr("dy","0.35em")
-					.attr("font-size",y.bandwidth()*0.4)
-					.tween("text", function() {
-						var i = d3.interpolate(this.textContent, 0);
-						return function(t) {
-							this.textContent = Math.round(i(t));
-						};
-					})
-					.style("opacity",0);
-				
-				trees.select(".tree-relative-label")
-					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
-					.attr("dy","0.5em")
-					.attr("font-size",y.bandwidth()*0.16)
-					.tween("text", function(d) {
-						var i = d3.interpolate(this.textContent.match(/\d*/)[0]/100, 0);
-						return function(t) {
-							this.textContent = format(i(t));
-						};
-					})
-					
-					.style("opacity",0);
-
 				// transition 3 - data content
 				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
 					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
 					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
 					.attr("fill", color);
-
-				trees.select(".tree-absolute-label")
-					.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
-					.tween("text", function(d) {
-						var i = d3.interpolate(this.textContent, d.d);
-						return function(t) {
-							this.textContent = Math.round(i(t));
-						};
-					})
-					.style("opacity",1);
-					
-
-				
-				trees.select(".tree-relative-label")
-				.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
-					.tween("text", function(d) {
-						var i = d3.interpolate(0, d.d/totals[d.col]);
-						return function(t) {
-							this.textContent = format(i(t));
-						};
-					})
-					.attr("x",x.bandwidth()*(0.6 + 0.4/2))
-					.attr("y",(d,i)=>(1-d.d/totals[d.col]/(((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?1:2))*y.bandwidth())
-					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
-					.style("opacity",1);
 
 			} else {
 				c_trees
@@ -1565,23 +1514,9 @@
 					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
 					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
 					.attr("fill", color)
-				c_trees.select(".key-label")
-					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
-					.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
-				trees.select(".tree-absolute-label")
-					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
-					.attr("dy","0.35em")
-					.attr("font-size",y.bandwidth()*0.4)
-					.style("opacity",1);
-				trees.select(".tree-relative-label")
-					.attr("x",x.bandwidth()*(0.6 + 0.4/2))
-					.attr("y",(d,i)=>(1-d.d/totals[d.col]/(((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?1:2))*y.bandwidth())
-					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
-					.attr("font-size",y.bandwidth()*0.16)
-					.style("opacity",1);
 
 			}
-
+			/* */
 		}
 
 		chart.__data = undefined
@@ -1662,7 +1597,7 @@
 				this.__margin = t;
 				return this;
 			}
-			return chart.__margin || { top: 5, bottom: 20, left: 20, right: 5 };
+			return chart.__margin || { top: 5, bottom: 20, left: 30, right: 5 };
 		}
 		chart.__color = undefined;
 		/**
@@ -1827,7 +1762,7 @@
 				this.__y_range = range;
 				return this;
 			}
-			return this.__y_range || [0, this.height() - this.margin().top - this.margin().bottom];
+			return this.__y_range || [this.height() - this.margin().top - this.margin().bottom, 0];
 		}
 
 		chart.__y_axis = undefined;
