@@ -1435,12 +1435,12 @@ var x,y;
 
 			//Conditional Transition
 			if (transition) {
-				xAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
-					.duration(transition.duration * 0.4)
+				xAxisGroup.transition().delay(transition.delay + transition.duration * (!chart.__stack_mode_last && stack_mode?0.7:0.3))
+					.duration(transition.duration * (!chart.__stack_mode_last && stack_mode?0.3:0.4))
 					.call(xAxis)
 					.attr("transform", `translate(0,${h})`);
-				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.7)
-					.duration(transition.duration * 0.3)
+				yAxisGroup.transition().delay(transition.delay + transition.duration * (!chart.__stack_mode_last && stack_mode?0.3:0.7))
+					.duration(transition.duration * (!chart.__stack_mode_last && stack_mode?0.4:0.3))
 					.call(yAxis);
 			} else {
 				xAxisGroup.call(xAxis)
@@ -1455,7 +1455,7 @@ var x,y;
 					.data(chart.data()).enter().append("g")
 					.attr("class", (d,i)=>"c-stackbar c-stackbar-"+i)
 					.attr("transform", function (d) { return `translate(${x(d[key])},0)` })
-					//.style("opacity",0)
+					.style("opacity",0)
 
 			c_stackbars = g.selectAll(".c-stackbar")
 					.selectAll("rect")
@@ -1466,10 +1466,11 @@ var x,y;
 					}).enter().append("rect")
 					.attr("class", (d,i)=>`stackbar stackbar-${i}`)
 					.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
-					.attr("height", (d)=>(0))
+					.attr("height", (d)=>((!chart.__stack_mode_last && stack_mode)?h-y(d.d):1))
+					.attr("y", (d)=>((!chart.__stack_mode_last && stack_mode)?y(d.stack):y(0)))
 					.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
-					.attr("y",(d)=>y(0)).attr("fill", color)
-					//.style("opacity",0)
+					.attr("fill", color)
+					.style("opacity",0)
 				
 			
 					
@@ -1507,30 +1508,51 @@ var x,y;
 				}).call(chart.__event_manager.call());
 			
 			if (transition) {
-				/*
-				// transition 1 - fade out
-				c_stackbars.transition().delay(transition.delay + transition.duration * 0.15).duration(transition.duration * 0.15)
-					
 				// transition 2 - position
 				c_stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
-					.select(".key-label")
-					//.attr("font-size",y.bandwidth()*0.16)
-					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
-						.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
-				stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(0,${y(d.i)})` }).style("opacity",1);
 
-				rects_stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("width", (d)=>d.w).attr("height", (d)=>d.h)
-					.attr("x",(d)=>d.x).attr("y",(d)=>d.y);
+				if(!chart.__stack_mode_last && stack_mode){
+					stackbars
+						.transition()
+							.delay(transition.delay + transition.duration * 0.3)
+							.duration(transition.duration * 0.4)
+						.attr("fill", color)
+						.style("opacity",1)
+							.ease(transition.ease)
+						.attr("height", (d)=>(h-y(d.d)))
+						.attr("y",(d)=> stack_mode?y(d.stack):y(d.d));
 
-				// transition 3 - data content
-				rects_stackbars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
-					.attr("height", function (d,i) { return i==2?(d.d/totals[d.group])*y.bandwidth():d.h })
-					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.group])*y.bandwidth():d.y })
-					.attr("fill", color);
-				/* */
+
+							
+
+					stackbars
+						.transition()
+							.delay(transition.delay + transition.duration * 0.7)
+							.duration(transition.duration * 0.3)
+						.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
+						.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
+				}else{
+					stackbars
+						.transition()
+							.delay(transition.delay + transition.duration * 0.3)
+							.duration(transition.duration * 0.4)
+						.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
+						.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
+						.attr("fill", color)
+						.style("opacity",1);
+
+					stackbars
+						.transition()
+							.delay(transition.delay + transition.duration * 0.7)
+							.duration(transition.duration * 0.3)
+							.ease(transition.ease)
+						.attr("height", (d)=>(h-y(d.d)))
+						.attr("y",(d)=> stack_mode?y(d.stack):y(d.d))
+						
+				}
+
+				
 			} else {
 				c_stackbars
 					.attr("transform", function (d) {
@@ -1545,6 +1567,8 @@ var x,y;
 					.style("opacity",1);
 
 			}
+
+			chart.__stack_mode_last = stack_mode;
 		}
 
 		chart.__stack_mode = undefined
@@ -1583,7 +1607,7 @@ var x,y;
 				if (data instanceof Array) {
 					this.__data = data;
 					return this;
-				} else
+				} else if(data)
 					random = true;
 			}
 			if (this.__data == undefined)
