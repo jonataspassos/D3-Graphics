@@ -25,9 +25,10 @@
             }
             repeat();/**/
 
-            d3.select("#vis").transition().duration(2000).call(chart);
+            //d3.select("#vis").transition().duration(2000).call(chart);
 
-            //setInterval(() => d3.select("#vis").call(chart.data(true)).on("end", repeat), 3000)
+            //setInterval(() => d3.select("#vis").call(chart.data(true).stack_mode(-1)), 3000)
+            d3.select("#vis").call(chart.data(true).stack_mode(-1));
 
 
             /*

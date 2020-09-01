@@ -1,4 +1,5 @@
-
+//var temp;
+var x,y;
 (() => {
 	jg = {};
 	jg.y = {}
@@ -467,8 +468,13 @@
 
 			//Bars
 			//Insert
-			var bars = g.selectAll(".bar").data(chart.data()).enter().append("g").attr("class", (d,i)=>"bar bar-"+i)
-				.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
+			var bars = g.selectAll(".bar")
+				.data(chart.data()).enter()
+				.append("g")
+				.attr("class", (d,i)=>"bar bar-"+i)
+				.attr("transform", function (d) {
+					return `translate(${x(d[key])},${h})`
+				})
 			bars.append("rect").attr("width", x.bandwidth()).attr("fill", color);
 			//Remove
 			bars = g.selectAll(".bar").data(chart.data()).exit();
@@ -1368,9 +1374,10 @@
 				margin = chart.margin(),					  //Margin of chart
 				color = chart.color(),					   //Function to define color
 				key = chart.key(),						   //String of key
-				list = chart.list();					   //String of list
+				list = chart.list(),					   //String of list
+				stack_mode = chart.stack_mode();			// boolean informs if is staked visualization
 			
-				if (width < margin.left + margin.right + 40)
+			if (width < margin.left + margin.right + 40)
 				margin.right = 0, margin.left = -1;
 			if (height < margin.top + margin.bottom + 10)
 				margin.top = 1, margin.bottom = 3;
@@ -1399,21 +1406,23 @@
 
 			var h = chart.y_range()[0];
 
-			var x = chart.x_scale().range(chart.x_range())
-				,
-				y = chart.y_scale().range(chart.y_range());
-			
-			var xAxis = chart.x_axis().scale(x),
-				yAxis = chart.y_axis().scale(y);
+			x = chart.x_scale().range(chart.x_range()),
+			y = chart.y_scale().range(chart.y_range());
 
-			var totals = [];
-			var xAxisGroup = [];
+			var totals = []; // stacked mode
+			var xGroup = []; // grouped mode
 			chart.data().map((d,i)=>{
 				totals.push(d[list].reduce((total, numero) => total + numero, 0));
-				xAxisGroup.push(d3.scaleBand().domain(d[list]).range([0,x.bandwidth()]));
+				xGroup.push(d3.scaleBand().domain(d[list]).range([0,x.bandwidth()]));
 			});
 
-			console.log([chart.data(),totals,xAxisGroup])
+			//temp = ([chart.data(),totals,xGroup]) see this values on out context
+
+			if(stack_mode)
+				y.domain([0,d3.max(totals)])
+
+			var xAxis = chart.x_axis().scale(x),
+				yAxis = chart.y_axis().scale(y);
 
 			//Insert
 			g.selectAll(".chart-axis").data([{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
@@ -1439,84 +1448,122 @@
 				yAxisGroup
 					.call(yAxis);
 			}
-			/*
-			//Columns Tree
+			
+			//Columns stackbar
 			//Insert
-			var c_trees = g.selectAll(".c-tree").data(chart.data()).enter().append("g")
-				.attr("class", (d,i)=>"c-tree c-tree-"+i)
-				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity",0)
+			var c_stackbars = g.selectAll(".c-stackbar")
+					.data(chart.data()).enter().append("g")
+					.attr("class", (d,i)=>"c-stackbar c-stackbar-"+i)
+					.attr("transform", function (d) { return `translate(${x(d[key])},0)` })
+					//.style("opacity",0)
 
-			c_trees = g.selectAll(".c-tree").selectAll(".tree").data((d,col)=>d[list].map((d,i)=>{return {d:d,i:i,col:col}})).enter().append("g")
-				.attr("class", (d,i)=>`tree tree-${i}`)
-				.attr("transform", function (d,i) { return `translate(0,${y(i)})` }).style("opacity",0)
+			c_stackbars = g.selectAll(".c-stackbar")
+					.selectAll("rect")
+					.data((e,group)=>{
+						return e[list].map((d,i)=>{
+							return {d:d,i:i,group:group,key:e.key}
+						})
+					}).enter().append("rect")
+					.attr("class", (d,i)=>`stackbar stackbar-${i}`)
+					.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
+					.attr("height", (d)=>(0))
+					.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
+					.attr("y",(d)=>y(0)).attr("fill", color)
+					//.style("opacity",0)
 				
-			c_trees.append("rect").attr("class",(d,i)=>`tree-rect tree-rect-${i}`).attr("width", (d)=>d.w)
-					.attr("height", (d)=>d.h).attr("x",(d)=>d.x).attr("y",(d)=>d.y).attr("fill", color);
-
+			
+					
+			
 			//Remove
-			c_trees = g.selectAll(".c-tree").data(chart.data()).exit();
-			trees = g.selectAll(".c-tree").data(chart.data()).selectAll(".tree").data((d)=>d[list]).exit();
+			c_stackbars = g.selectAll(".c-stackbar").data(chart.data()).exit();
+			stackbars = g.selectAll(".c-stackbar").data(chart.data()).selectAll(".stackbar").data((d)=>d[list]).exit();
 			if (transition) {
-				c_trees.style("opacity",1);
-				c_trees.transition().delay(transition.delay).duration(transition.duration * 0.3)
+				c_stackbars.style("opacity",1);
+				c_stackbars.transition().delay(transition.delay).duration(transition.duration * 0.3)
 					.style("opacity",0);
 				
-				c_trees.transition().delay(transition.delay + transition.duration * 0.3).remove()
+				c_stackbars.transition().delay(transition.delay + transition.duration * 0.3).remove()
 
-				trees.style("opacity",1);
-				trees.transition().delay(transition.delay).duration(transition.duration * 0.3)
+				stackbars.style("opacity",1);
+				stackbars.transition().delay(transition.delay).duration(transition.duration * 0.3)
 					.style("opacity",0);
 				
-				trees.transition().delay(transition.delay + transition.duration * 0.3).remove()
+				stackbars.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
-				c_trees.remove(),trees.remove()
+				c_stackbars.remove(),stackbars.remove()
 			
 			//Update
-			c_trees = g.selectAll(".c-tree").data(chart.data())
-			trees = c_trees.selectAll(".tree").data((d,col)=>d[list].map((e,i)=>{return {d:e,i:i,col:col,key:d[key]}}))
-				.call(chart.__event_manager.call());
+			c_stackbars = g.selectAll(".c-stackbar")
+				.data(chart.data())
+			stackbars = c_stackbars.selectAll(".stackbar")
+			.data((e,group)=>{
+					stack_cumul = 0;
+					return e[list].map((d,i)=>{
+						stack_cumul += d;
+						var ret = {d:d,i:i,group:group,stack:stack_cumul}
+						ret[key] = e[key];
+						return ret;
+					})
+				}).call(chart.__event_manager.call());
 			
 			if (transition) {
+				/*
 				// transition 1 - fade out
-				c_trees.transition().delay(transition.delay + transition.duration * 0.15).duration(transition.duration * 0.15)
+				c_stackbars.transition().delay(transition.delay + transition.duration * 0.15).duration(transition.duration * 0.15)
 					
 				// transition 2 - position
-				c_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+				c_stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
 					.select(".key-label")
 					//.attr("font-size",y.bandwidth()*0.16)
 					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
 						.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
-				trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+				stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(0,${y(d.i)})` }).style("opacity",1);
 
-				rects_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+				rects_stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("width", (d)=>d.w).attr("height", (d)=>d.h)
 					.attr("x",(d)=>d.x).attr("y",(d)=>d.y);
 
 				// transition 3 - data content
-				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
-					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
-					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
+				rects_stackbars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3)
+					.attr("height", function (d,i) { return i==2?(d.d/totals[d.group])*y.bandwidth():d.h })
+					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.group])*y.bandwidth():d.y })
 					.attr("fill", color);
-
+				/* */
 			} else {
-				c_trees
-					.attr("transform", function (d) { return `translate(${x(d.key)},0)` })
-					.style("opacity",1);
-				trees
-					.attr("transform", function (d) { return `translate(0,${y(d.i)})` })
-					.style("opacity",1);
-
-				rects_trees
-					.attr("width", (d)=>d.w)
-					.attr("x",(d)=>d.x)
-					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
-					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
+				c_stackbars
+					.attr("transform", function (d) {
+						return `translate(${x(d[key])},0)`
+					}).style("opacity",1);
+				stackbars
+					.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
+					.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
+					.attr("height", (d)=>(h-y(d.d)))
+					.attr("y",(d)=> stack_mode?y(d.stack):y(d.d))
 					.attr("fill", color)
+					.style("opacity",1);
 
 			}
-			/* */
+		}
+
+		chart.__stack_mode = undefined
+		/**
+		 * Say if is stack mode. This should be a boolean
+		 * @param {boolean} stack_mode informs stack mode
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current status mode
+		 * If you sent -1 number, this will be toggle status
+		 */
+		chart.stack_mode = function (stack_mode) {
+			if (stack_mode) {
+				if(stack_mode == -1)
+					this.__stack_mode = !this.__stack_mode;
+				else
+					this.__stack_mode = stack_mode;
+				return this;
+			}
+			return this.__stack_mode || false;
 		}
 
 		chart.__data = undefined
@@ -1601,10 +1648,10 @@
 		}
 		chart.__color = undefined;
 		/**
-		 * Set a color rule to pattern of the tree to define the lines of tree.
+		 * Set a color rule to pattern of the stack bar to define the lines of stack bar.
 		 * This can be a value of color or a function with 
 		 * data(number), index(line), dataset(list of column) as param
-		 * @param {Function,String,Array} color The color rule to pattern of the tree
+		 * @param {Function,String,Array} color The color rule to pattern of the stack bar
 		 * @param {boolean} control when true, give total control to param color (be function, String or array)
 		 * @return the self chart
 		 * If you dont sent a parameter, you will get the current color rule
@@ -1663,7 +1710,7 @@
 				return this;
 			} else
 				return chart.__x_scale || d3.scaleBand().domain(chart.x_domain())
-					.paddingInner(0.1)//.paddingOuter(0.1);
+					.paddingInner(0.1).paddingOuter(0.1);
 		}
 
 		chart.__x_domain = undefined;
@@ -1743,12 +1790,12 @@
 				if (domain instanceof Array)
 					this.__y_domain = domain;
 			} return this.__y_domain ||
-				jg.range(
-				d3.max(this.data(),
+				[0,d3.max(this.data(),
 					function (d) {
-						return d[a.list()].length
-					})
-				)
+						return d3.max(d[a.list()],d=>d)
+					})]
+				
+				
 		}
 		chart.__y_range = undefined
 		/**
