@@ -1,5 +1,5 @@
 //var temp;
-var x,y;
+var x, y;
 (() => {
 	jg = {};
 	jg.y = {}
@@ -89,8 +89,8 @@ var x,y;
 
 	/*ToolTip: https://bl.ocks.org/d3noob/a22c42db65eb00d4e369*/
 	jg.__tooltip_counter = 0;
-	jg.tooltip = function(){
-		var tool = function(){
+	jg.tooltip = function () {
+		var tool = function () {
 			tool.selection(true);
 			return tool;
 		};
@@ -101,29 +101,29 @@ var x,y;
 		 * Get d3 selection to tooltip;
 		 * @param {boolean} update send true to update paramns
 		 */
-		tool.selection = function(update){
-			var temp = d3.select("body").selectAll(".tooltip-"+tool.__id).data([null]).enter().append("div")
-				.classed("tooltip-"+tool.__id,true)
+		tool.selection = function (update) {
+			var temp = d3.select("body").selectAll(".tooltip-" + tool.__id).data([null]).enter().append("div")
+				.classed("tooltip-" + tool.__id, true)
 				.style("opacity", 0)
-			temp = d3.select(".tooltip-"+tool.__id)
+			temp = d3.select(".tooltip-" + tool.__id)
 			var c = temp.attr("class") || "";
-			
-			c = c.split(" ").filter((d)=>!d.match(/tooltip(-[0-9]+)?/)).join(" ");
-			
-			temp.attr("class",(c+" tooltip tooltip-"+tool.__id).trim());
-			if(update){
-				temp.style("position","absolute")
-					.style("text-align",this.align())
-					.style("padding","5px")
-					.style("font",this.font())
-					.style("background",this.background())
-					.style("border","0px")
+
+			c = c.split(" ").filter((d) => !d.match(/tooltip(-[0-9]+)?/)).join(" ");
+
+			temp.attr("class", (c + " tooltip tooltip-" + tool.__id).trim());
+			if (update) {
+				temp.style("position", "absolute")
+					.style("text-align", this.align())
+					.style("padding", "5px")
+					.style("font", this.font())
+					.style("background", this.background())
+					.style("border", "0px")
 					//.style("border-radius","8px")
-					.style("pointer-events","none");
+					.style("pointer-events", "none");
 			}
-			return d3.select(".tooltip-"+tool.__id);
+			return d3.select(".tooltip-" + tool.__id);
 		}
-		
+
 		tool.__align = undefined;
 		/**
 		 * Set align of text inner tooltip
@@ -131,8 +131,8 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current align of tooltip
 		 */
-		tool.align = function(align){
-			if(align){
+		tool.align = function (align) {
+			if (align) {
 				this.__align = align;
 				return this;
 			}
@@ -150,20 +150,20 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current orientation of tooltip
 		 */
-		tool.orientation = function(orientation){
-			if(orientation == true){
+		tool.orientation = function (orientation) {
+			if (orientation == true) {
 				return this.__orientation;
 			}
-			if(orientation){
+			if (orientation) {
 				var m = orientation.match(/(top|middle|bottom)[ \t]*-[ \t]*(left|center|right)/);
-				if(m){
-					this.__orientation = {v:m[1],h:m[2]}
-				}else{
+				if (m) {
+					this.__orientation = { v: m[1], h: m[2] }
+				} else {
 					console.error("Orientation Out Format!");
 				}
 				return this;
 			}
-			return (this.__orientation.v+"-"+this.__orientation.h) || "top-left";
+			return (this.__orientation.v + "-" + this.__orientation.h) || "top-left";
 		}
 		tool.__font = undefined;
 		/**
@@ -172,8 +172,8 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current font of tooltip
 		 */
-		tool.font = function(font){
-			if(font){
+		tool.font = function (font) {
+			if (font) {
 				this.__font = font;
 				return this;
 			}
@@ -186,8 +186,8 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current background of tooltip
 		 */
-		tool.background = function(background){
-			if(background){
+		tool.background = function (background) {
+			if (background) {
 				this.__background = background;
 				return this;
 			}
@@ -200,8 +200,8 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current html of tooltip
 		 */
-		tool.html = function(html){
-			if(html){
+		tool.html = function (html) {
+			if (html) {
 				this.__html = html;
 				return this;
 			}
@@ -214,14 +214,14 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current fadein duration of tooltip
 		 */
-		tool.fadein = function(duration){
-			if(duration){
+		tool.fadein = function (duration) {
+			if (duration) {
 				this.__fadein = duration;
 				return this;
 			}
 			return this.__fadein;
 		}
-		
+
 		tool.__fadeout = undefined;
 		/**
 		 * Set content of fadeout duration of tooltip
@@ -229,8 +229,8 @@ var x,y;
 		 * @returns the self tooltip
 		 * If you don't send a parameter, you will get the current fadeout duration of tooltip
 		 */
-		tool.fadeout = function(duration){
-			if(duration){
+		tool.fadeout = function (duration) {
+			if (duration) {
 				this.__fadeout = duration;
 				return this;
 			}
@@ -241,7 +241,7 @@ var x,y;
 		 * @param {number} duration time of fadeout (opitional)
 		 * @returns the self tooltip
 		 */
-		tool.hide = function(duration){
+		tool.hide = function (duration) {
 			duration = duration || this.fadeout();
 			this.selection().transition()
 				.duration(duration)
@@ -257,29 +257,29 @@ var x,y;
 		 * If don't send the position, this will be get position of event
 		 *  in d3.event.pageX and d3.event.pageY
 		 */
-		tool.show = function(x,y,duration){
+		tool.show = function (x, y, duration) {
 			duration = duration || this.fadein();
-			x  = x || d3.event.pageX;
-			y  = y || d3.event.pageY;
-			
+			x = x || d3.event.pageX;
+			y = y || d3.event.pageY;
+
 			this.selection().html(this.html());
 
 			//Set orientation
-			var size = jg.size_info(".tooltip-"+this.__id);
+			var size = jg.size_info(".tooltip-" + this.__id);
 			var o = this.orientation(true);
 
-			
-			
-			x -= size.w * (o.h=="left"?0:(o.h=="center"?0.5:1));
-			y -= size.h * (o.v=="top"?0:(o.v=="middle"?0.5:1));
+
+
+			x -= size.w * (o.h == "left" ? 0 : (o.h == "center" ? 0.5 : 1));
+			y -= size.h * (o.v == "top" ? 0 : (o.v == "middle" ? 0.5 : 1));
 
 			//Normalizing to put in visible space
-			if(x<0)x=0;
-			if(y<0)y=0;
-			if(x+size.w>window.innerWidth)
-				x=window.innerWidth - size.w;
-			if(y+size.h>window.innerHeight)
-				y=window.innerHeight - size.h;
+			if (x < 0) x = 0;
+			if (y < 0) y = 0;
+			if (x + size.w > window.innerWidth)
+				x = window.innerWidth - size.w;
+			if (y + size.h > window.innerHeight)
+				y = window.innerHeight - size.h;
 
 			this.selection()
 				.style("left", `${x}px`)
@@ -395,8 +395,8 @@ var x,y;
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			
-			if(!chart.inner()){
+
+			if (!chart.inner()) {
 				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
 				var size_info = jg.size_info(".bar-chart-" + chart.__id)
 				chart.__size_info = size_info
@@ -417,9 +417,9 @@ var x,y;
 			color = chart.color(),					   //Function to define color
 				key = chart.key(),						   //String of key
 				value = chart.value();					   //String of value
-			
+
 			var g;
-			if(!chart.inner()){
+			if (!chart.inner()) {
 				//Tags
 				//Insert
 				selection.selectAll("svg").data([null]).enter().append("svg")
@@ -430,11 +430,11 @@ var x,y;
 					.attr("transform", `translate(${margin.left},${margin.top})`)
 				//Update
 				g = selection.select("g");
-			}else{
+			} else {
 				selection.selectAll("g").data([null]).enter().append("g");
 				g = selection.select("g");
 			}
-			
+
 
 			//Conditional Transition
 			if (transition)
@@ -482,7 +482,7 @@ var x,y;
 			var bars = g.selectAll(".bar")
 				.data(chart.data()).enter()
 				.append("g")
-				.attr("class", (d,i)=>"bar bar-"+i)
+				.attr("class", (d, i) => "bar bar-" + i)
 				.attr("transform", function (d) {
 					return `translate(${x(d[key])},${h})`
 				})
@@ -504,7 +504,7 @@ var x,y;
 			bars = g.selectAll(".bar").data(chart.data())
 				.call(chart.__event_manager.call());
 			if (transition) {
-				bars.interrupt().style("opacity",1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+				bars.interrupt().style("opacity", 1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
 					.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
 					.select("rect").attr("width", x.bandwidth())
 				bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
@@ -563,11 +563,11 @@ var x,y;
 		 * when true, the width and heigth parameters should be defined to creation and
 		 * redraw.
 		 */
-		chart.inner = function(inner){
-			if(inner!=undefined){
+		chart.inner = function (inner) {
+			if (inner != undefined) {
 				chart.__inner = inner;
 				return this;
-			}else{
+			} else {
 				return chart.__inner;
 			}
 
@@ -687,7 +687,7 @@ var x,y;
 		chart.x_domain = function (domain) {
 			var a = this;
 			if (domain) {
-				if (domain instanceof Array){
+				if (domain instanceof Array) {
 					this.__x_domain = domain;
 					return this;
 				}
@@ -817,19 +817,19 @@ var x,y;
 		 * @param {String, Function} text
 		 * 
 		 */
-		chart.tooltip  = function(text){
-			if(text){
+		chart.tooltip = function (text) {
+			if (text) {
 				this.__tooltip.orientation("bottom-left");
-				this.on("mouseover",(d,i,e,t)=>{
+				this.on("mouseover", (d, i, e, t) => {
 					var p = t.getBoundingClientRect();
-					chart.__tooltip.html(text instanceof Function? text(d,i,e,t): text)
-						.show(p.x+p.width,p.y)
-					d3.select(t).style("opacity",1.0).transition().style("opacity",0.7)
-				},"tooltip-in")
-				.on("mouseout",(d,i,e,t)=>{
-					chart.__tooltip.hide();
-					d3.select(t).transition().style("opacity",1)
-				},"tooltip-out")
+					chart.__tooltip.html(text instanceof Function ? text(d, i, e, t) : text)
+						.show(p.x + p.width, p.y)
+					d3.select(t).style("opacity", 1.0).transition().style("opacity", 0.7)
+				}, "tooltip-in")
+					.on("mouseout", (d, i, e, t) => {
+						chart.__tooltip.hide();
+						d3.select(t).transition().style("opacity", 1)
+					}, "tooltip-out")
 
 				return this;
 			}
@@ -859,7 +859,7 @@ var x,y;
 
 			var selection = context.selection ? context.selection() : context;
 
-			if(!chart.inner()){
+			if (!chart.inner()) {
 				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
 				var size_info = jg.size_info(".bar-chart-" + chart.__id)
 				chart.__size_info = size_info
@@ -872,9 +872,9 @@ var x,y;
 				color = chart.color(),					   //Function to define color
 				key = chart.key(),						   //String of key
 				list = chart.list();					   //String of list
-			
+
 			var g;
-			if(!chart.inner()){
+			if (!chart.inner()) {
 				//Tags
 				//Insert
 				selection.selectAll("svg").data([null]).enter().append("svg")
@@ -885,7 +885,7 @@ var x,y;
 					.attr("transform", `translate(${margin.left},${margin.top})`)
 				//Update
 				g = selection.select("g");
-			}else{
+			} else {
 				selection.selectAll("g").data([null]).enter().append("g");
 				g = selection.select("g");
 			}
@@ -900,7 +900,7 @@ var x,y;
 			var h = chart.y_range()[0];
 
 			var totals = [];
-			chart.data().map((d,i)=>{
+			chart.data().map((d, i) => {
 				totals.push(d[list].reduce((total, numero) => total + numero, 0));
 			});
 
@@ -912,182 +912,184 @@ var x,y;
 			//Columns Tree
 			//Insert
 			var c_trees = g.selectAll(".c-tree").data(chart.data()).enter().append("g")
-				.attr("class", (d,i)=>"c-tree c-tree-"+i)
-				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity",0)
+				.attr("class", (d, i) => "c-tree c-tree-" + i)
+				.attr("transform", function (d) { return `translate(${x(d[key])},0)` }).style("opacity", 0)
 
-			c_trees.append("text").attr("class",(d,i)=>`key-label key-label-+${i}`)
+			c_trees.append("text").attr("class", (d, i) => `key-label key-label-+${i}`)
 				//.attr("font-size",y.bandwidth()*0.16)
-				.attr("text-anchor","middle")
-				.attr("font-family","Roboto")
-				.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
-				.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",0);
+				.attr("text-anchor", "middle")
+				.attr("font-family", "Roboto")
+				.attr("y", -5).attr("x", (d) => x.bandwidth() / 2)
+				.text((d, i) => `${d.key}(${totals[i]})`).style("opacity", 0);
 
-			c_trees = g.selectAll(".c-tree").selectAll(".tree").data((d,col)=>d[list].map((d,i)=>{return {d:d,i:i,col:col}})).enter().append("g")
-				.attr("class", (d,i)=>`tree tree-${i}`)
-				.attr("transform", function (d,i) { return `translate(0,${y(i)})` }).style("opacity",0)
-				
+			c_trees = g.selectAll(".c-tree").selectAll(".tree").data((d, col) => d[list].map((d, i) => { return { d: d, i: i, col: col } })).enter().append("g")
+				.attr("class", (d, i) => `tree tree-${i}`)
+				.attr("transform", function (d, i) { return `translate(0,${y(i)})` }).style("opacity", 0)
+
 			c_trees.selectAll("rect")
-				.data((d,i,e)=>{
+				.data((d, i, e) => {
 					return [
-					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
-					{d:d.d,i:d.i,e:e,x:x.bandwidth()*0.6,y:0,w:x.bandwidth()*0.4,h:y.bandwidth()},
-					//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
-					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
-				]}).enter().append("rect").attr("class",(d,i)=>`tree-rect tree-rect-${i}`).attr("width", (d)=>d.w)
-					.attr("height", (d)=>d.h).attr("x",(d)=>d.x).attr("y",(d)=>d.y).attr("fill", color);
-			c_trees.append("text").attr("class",(d,i)=>`tree-absolute-label tree-absolute-label-${d.i}`)
-				.attr("text-anchor","middle")
-				.attr("fill","white")
-				.attr("font-weight","bold")
-				.attr("font-family","Roboto")
-				.text((d)=>d.d)
-				.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2).attr("dy","0.8em")
-				.style("opacity",0);
-			c_trees.append("text").attr("class",(d,i)=>`tree-relative-label tree-relative-label-${d.i}`)
-				.attr("text-anchor","middle")
-				.attr("font-size",12)
-				.attr("fill","white")
-				.attr("font-family","Roboto")
-				.attr("font-weight","bold")
-				.text((d)=>`${parseInt(d.d*100/totals[d.col])}%`)
-				.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
-				.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=14)?"-0.5em":"0.8em")
-				.style("opacity",0);
+						{ d: d.d, i: d.i, e: e, x: 0, y: 0, w: x.bandwidth() * 0.6, h: y.bandwidth() },
+						{ d: d.d, i: d.i, e: e, x: x.bandwidth() * 0.6, y: 0, w: x.bandwidth() * 0.4, h: y.bandwidth() },
+						//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
+						{ d: d.d, i: d.i, e: e, col: d.col, x: x.bandwidth() * 0.6, y: y.bandwidth(), w: x.bandwidth() * 0.4, h: 0 },
+					]
+				}).enter().append("rect").attr("class", (d, i) => `tree-rect tree-rect-${i}`).attr("width", (d) => d.w)
+				.attr("height", (d) => d.h).attr("x", (d) => d.x).attr("y", (d) => d.y).attr("fill", color);
+			c_trees.append("text").attr("class", (d, i) => `tree-absolute-label tree-absolute-label-${d.i}`)
+				.attr("text-anchor", "middle")
+				.attr("fill", "white")
+				.attr("font-weight", "bold")
+				.attr("font-family", "Roboto")
+				.text((d) => d.d)
+				.attr("x", x.bandwidth() * 0.6 / 2).attr("y", y.bandwidth() / 2).attr("dy", "0.8em")
+				.style("opacity", 0);
+			c_trees.append("text").attr("class", (d, i) => `tree-relative-label tree-relative-label-${d.i}`)
+				.attr("text-anchor", "middle")
+				.attr("font-size", 12)
+				.attr("fill", "white")
+				.attr("font-family", "Roboto")
+				.attr("font-weight", "bold")
+				.text((d) => `${parseInt(d.d * 100 / totals[d.col])}%`)
+				.attr("x", x.bandwidth() * (0.6 + 0.4 / 2)).attr("y", (d, i) => y.bandwidth())
+				.attr("dy", (d, i) => ((d.d / totals[d.col]) * y.bandwidth() <= 14) ? "-0.5em" : "0.8em")
+				.style("opacity", 0);
 
 			//Remove
 			c_trees = g.selectAll(".c-tree").data(chart.data()).exit();
-			trees = g.selectAll(".c-tree").data(chart.data()).selectAll(".tree").data((d)=>d[list]).exit();
+			trees = g.selectAll(".c-tree").data(chart.data()).selectAll(".tree").data((d) => d[list]).exit();
 			if (transition) {
-				c_trees.style("opacity",1);
+				c_trees.style("opacity", 1);
 				c_trees.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.style("opacity",0);
-				
+					.style("opacity", 0);
+
 				c_trees.transition().delay(transition.delay + transition.duration * 0.3).remove()
 
-				trees.style("opacity",1);
+				trees.style("opacity", 1);
 				trees.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.style("opacity",0);
-				
+					.style("opacity", 0);
+
 				trees.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
-				c_trees.remove(),trees.remove()
-			
+				c_trees.remove(), trees.remove()
+
 			//Update
 			c_trees = g.selectAll(".c-tree").data(chart.data())
-			trees = c_trees.selectAll(".tree").data((d,col)=>d[list].map((e,i)=>{return {d:e,i:i,col:col,key:d[key]}}))
+			trees = c_trees.selectAll(".tree").data((d, col) => d[list].map((e, i) => { return { d: e, i: i, col: col, key: d[key] } }))
 				.call(chart.__event_manager.call());
-			var rects_trees = trees.selectAll("rect").data((d,i,e)=>{
-					return [
-					{d:d.d,i:d.i,e:e,x:0,y:0,w:x.bandwidth()*0.6,h:y.bandwidth()},
-					{d:d.d,i:d.i,e:e,x:x.bandwidth()*0.6,y:0,w:x.bandwidth()*0.4,h:y.bandwidth()},
+			var rects_trees = trees.selectAll("rect").data((d, i, e) => {
+				return [
+					{ d: d.d, i: d.i, e: e, x: 0, y: 0, w: x.bandwidth() * 0.6, h: y.bandwidth() },
+					{ d: d.d, i: d.i, e: e, x: x.bandwidth() * 0.6, y: 0, w: x.bandwidth() * 0.4, h: y.bandwidth() },
 					//y:(1-d.d/totals[d.col])*y.bandwidth()	h:(d.d/totals[d.col])*y.bandwidth()
-					{d:d.d,i:d.i,e:e,col:d.col,x:x.bandwidth()*0.6,y:y.bandwidth(),w:x.bandwidth()*0.4,h:0},
-				]})
+					{ d: d.d, i: d.i, e: e, col: d.col, x: x.bandwidth() * 0.6, y: y.bandwidth(), w: x.bandwidth() * 0.4, h: 0 },
+				]
+			})
 			if (transition) {
 				// transition 1 - fade out
 				c_trees.transition().delay(transition.delay + transition.duration * 0.15).duration(transition.duration * 0.15)
 					.select(".key-label")
-					.style("opacity",0);
+					.style("opacity", 0);
 				// transition 2 - position
 				c_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
+					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity", 1)
 					.select(".key-label")
 					//.attr("font-size",y.bandwidth()*0.16)
-					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
-						.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
+					.attr("y", -5).attr("x", (d) => x.bandwidth() / 2)
+					.text((d, i) => `${d.key}(${totals[i]})`).style("opacity", 1);
 				trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(0,${y(d.i)})` }).style("opacity",1);
+					.attr("transform", function (d) { return `translate(0,${y(d.i)})` }).style("opacity", 1);
 
 				rects_trees.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("width", (d)=>d.w).attr("height", (d)=>d.h)
-					.attr("x",(d)=>d.x).attr("y",(d)=>d.y);
+					.attr("width", (d) => d.w).attr("height", (d) => d.h)
+					.attr("x", (d) => d.x).attr("y", (d) => d.y);
 
 				trees.select(".tree-absolute-label")
 					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
-					.attr("dy","0.35em")
-					.attr("font-size",y.bandwidth()*0.4)
-					.tween("text", function() {
+					.attr("x", x.bandwidth() * 0.6 / 2).attr("y", y.bandwidth() / 2)
+					.attr("dy", "0.35em")
+					.attr("font-size", y.bandwidth() * 0.4)
+					.tween("text", function () {
 						var i = d3.interpolate(this.textContent, 0);
-						return function(t) {
+						return function (t) {
 							this.textContent = Math.round(i(t));
 						};
 					})
-					.style("opacity",0);
-				
+					.style("opacity", 0);
+
 				trees.select(".tree-relative-label")
 					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("x",x.bandwidth()*(0.6 + 0.4/2)).attr("y",(d,i)=>y.bandwidth())
-					.attr("dy","0.5em")
-					.attr("font-size",y.bandwidth()*0.16)
-					.tween("text", function(d) {
-						var i = d3.interpolate(this.textContent.match(/\d*/)[0]/100, 0);
-						return function(t) {
+					.attr("x", x.bandwidth() * (0.6 + 0.4 / 2)).attr("y", (d, i) => y.bandwidth())
+					.attr("dy", "0.5em")
+					.attr("font-size", y.bandwidth() * 0.16)
+					.tween("text", function (d) {
+						var i = d3.interpolate(this.textContent.match(/\d*/)[0] / 100, 0);
+						return function (t) {
 							this.textContent = format(i(t));
 						};
 					})
-					
-					.style("opacity",0);
+
+					.style("opacity", 0);
 
 				// transition 3 - data content
 				rects_trees.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
-					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
-					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
+					.attr("height", function (d, i) { return i == 2 ? (d.d / totals[d.col]) * y.bandwidth() : d.h })
+					.attr("y", function (d, i) { return i == 2 ? (1 - d.d / totals[d.col]) * y.bandwidth() : d.y })
 					.attr("fill", color);
 
 				trees.select(".tree-absolute-label")
 					.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
-					.tween("text", function(d) {
+					.tween("text", function (d) {
 						var i = d3.interpolate(this.textContent, d.d);
-						return function(t) {
+						return function (t) {
 							this.textContent = Math.round(i(t));
 						};
 					})
-					.style("opacity",1);
-					
+					.style("opacity", 1);
 
-				
+
+
 				trees.select(".tree-relative-label")
-				.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
-					.tween("text", function(d) {
-						var i = d3.interpolate(0, d.d/totals[d.col]);
-						return function(t) {
+					.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
+					.tween("text", function (d) {
+						var i = d3.interpolate(0, d.d / totals[d.col]);
+						return function (t) {
 							this.textContent = format(i(t));
 						};
 					})
-					.attr("x",x.bandwidth()*(0.6 + 0.4/2))
-					.attr("y",(d,i)=>(1-d.d/totals[d.col]/(((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?1:2))*y.bandwidth())
-					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
-					.style("opacity",1);
+					.attr("x", x.bandwidth() * (0.6 + 0.4 / 2))
+					.attr("y", (d, i) => (1 - d.d / totals[d.col] / (((d.d / totals[d.col]) * y.bandwidth() <= y.bandwidth() * 0.17) ? 1 : 2)) * y.bandwidth())
+					.attr("dy", (d, i) => ((d.d / totals[d.col]) * y.bandwidth() <= y.bandwidth() * 0.17) ? "-0.2em" : "0.4em")
+					.style("opacity", 1);
 
 			} else {
 				c_trees
 					.attr("transform", function (d) { return `translate(${x(d.key)},0)` })
-					.style("opacity",1);
+					.style("opacity", 1);
 				trees
 					.attr("transform", function (d) { return `translate(0,${y(d.i)})` })
-					.style("opacity",1);
+					.style("opacity", 1);
 
 				rects_trees
-					.attr("width", (d)=>d.w)
-					.attr("x",(d)=>d.x)
-					.attr("height", function (d,i) { return i==2?(d.d/totals[d.col])*y.bandwidth():d.h })
-					.attr("y", function (d,i) { return i==2?(1-d.d/totals[d.col])*y.bandwidth():d.y })
+					.attr("width", (d) => d.w)
+					.attr("x", (d) => d.x)
+					.attr("height", function (d, i) { return i == 2 ? (d.d / totals[d.col]) * y.bandwidth() : d.h })
+					.attr("y", function (d, i) { return i == 2 ? (1 - d.d / totals[d.col]) * y.bandwidth() : d.y })
 					.attr("fill", color)
 				c_trees.select(".key-label")
-					.attr("y",-5).attr("x",(d)=>x.bandwidth()/2)
-					.text((d,i)=>`${d.key}(${totals[i]})`).style("opacity",1);
+					.attr("y", -5).attr("x", (d) => x.bandwidth() / 2)
+					.text((d, i) => `${d.key}(${totals[i]})`).style("opacity", 1);
 				trees.select(".tree-absolute-label")
-					.attr("x",x.bandwidth()*0.6/2).attr("y",y.bandwidth()/2)
-					.attr("dy","0.35em")
-					.attr("font-size",y.bandwidth()*0.4)
-					.style("opacity",1);
+					.attr("x", x.bandwidth() * 0.6 / 2).attr("y", y.bandwidth() / 2)
+					.attr("dy", "0.35em")
+					.attr("font-size", y.bandwidth() * 0.4)
+					.style("opacity", 1);
 				trees.select(".tree-relative-label")
-					.attr("x",x.bandwidth()*(0.6 + 0.4/2))
-					.attr("y",(d,i)=>(1-d.d/totals[d.col]/(((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?1:2))*y.bandwidth())
-					.attr("dy",(d,i)=>((d.d/totals[d.col])*y.bandwidth()<=y.bandwidth()*0.17)?"-0.2em":"0.4em")
-					.attr("font-size",y.bandwidth()*0.16)
-					.style("opacity",1);
+					.attr("x", x.bandwidth() * (0.6 + 0.4 / 2))
+					.attr("y", (d, i) => (1 - d.d / totals[d.col] / (((d.d / totals[d.col]) * y.bandwidth() <= y.bandwidth() * 0.17) ? 1 : 2)) * y.bandwidth())
+					.attr("dy", (d, i) => ((d.d / totals[d.col]) * y.bandwidth() <= y.bandwidth() * 0.17) ? "-0.2em" : "0.4em")
+					.attr("font-size", y.bandwidth() * 0.16)
+					.style("opacity", 1);
 
 			}
 
@@ -1121,8 +1123,9 @@ var x,y;
 						jg.getRandom(2, 3),// min value
 						jg.getRandom(4, 5))// max value
 						.map(function (d, i) {
-							d = jg.generate(d,40,350);
-							 return { key: "d" + i, list: d } })
+							d = jg.generate(d, 40, 350);
+							return { key: "d" + i, list: d }
+						})
 			}
 			return data != undefined ? this : this.__data;
 		}
@@ -1137,11 +1140,11 @@ var x,y;
 		 * when true, the width and heigth parameters should be defined to creation and
 		 * redraw.
 		 */
-		chart.inner = function(inner){
-			if(inner!=undefined){
+		chart.inner = function (inner) {
+			if (inner != undefined) {
 				chart.__inner = inner;
 				return this;
-			}else{
+			} else {
 				return chart.__inner;
 			}
 
@@ -1203,27 +1206,27 @@ var x,y;
 		 * @return the self chart
 		 * If you dont sent a parameter, you will get the current color rule
 		 */
-		chart.color = function (color,control) {
+		chart.color = function (color, control) {
 			if (color) {
-				if(control){
+				if (control) {
 					this.__color = color;
 					return this;
 				}
-				this.__color = function(d,i){
+				this.__color = function (d, i) {
 					var c;
-					if(color instanceof Function)
-						c = color(d.d,d.i,d.e,d.t);
-					else if(color instanceof Array)
+					if (color instanceof Function)
+						c = color(d.d, d.i, d.e, d.t);
+					else if (color instanceof Array)
 						c = color[d.i];
-					else	
+					else
 						c = color;
-					return (d3.scaleLinear().domain([0,6]).range(["white",c]))(i+3);
+					return (d3.scaleLinear().domain([0, 6]).range(["white", c]))(i + 3);
 				}
 				return this;
 			}
-			return this.__color || function(d,i,e){
-				
-				return (d3.scaleLinear().domain([0,6]).range(["white","steelblue"]))(i+3);
+			return this.__color || function (d, i, e) {
+
+				return (d3.scaleLinear().domain([0, 6]).range(["white", "steelblue"]))(i + 3);
 			};
 		}
 		chart.__key = undefined
@@ -1281,7 +1284,7 @@ var x,y;
 		chart.x_domain = function (domain) {
 			var a = this;
 			if (domain) {
-				if (domain instanceof Array){
+				if (domain instanceof Array) {
 					this.__x_domain = domain;
 					return this;
 				}
@@ -1335,10 +1338,10 @@ var x,y;
 					this.__y_domain = domain;
 			} return this.__y_domain ||
 				jg.range(
-				d3.max(this.data(),
-					function (d) {
-						return d[a.list()].length
-					})
+					d3.max(this.data(),
+						function (d) {
+							return d[a.list()].length
+						})
 				)
 		}
 		chart.__y_range = undefined
@@ -1385,19 +1388,19 @@ var x,y;
 		 * @param {String, Function} text
 		 * 
 		 */
-		chart.tooltip  = function(text){
-			if(text){
+		chart.tooltip = function (text) {
+			if (text) {
 				this.__tooltip.orientation("bottom-left");
-				this.on("mouseover",(d,i,e,t)=>{
+				this.on("mouseover", (d, i, e, t) => {
 					var p = t.getBoundingClientRect();
-					chart.__tooltip.html(text instanceof Function? text(d,i,e,t): text)
-						.show(p.x+p.width,p.y)
-					d3.select(t).style("opacity",1.0).transition().style("opacity",0.7)
-				},"tooltip-in")
-				.on("mouseout",(d,i,e,t)=>{
-					chart.__tooltip.hide();
-					d3.select(t).transition().style("opacity",1)
-				},"tooltip-out")
+					chart.__tooltip.html(text instanceof Function ? text(d, i, e, t) : text)
+						.show(p.x + p.width, p.y)
+					d3.select(t).style("opacity", 1.0).transition().style("opacity", 0.7)
+				}, "tooltip-in")
+					.on("mouseout", (d, i, e, t) => {
+						chart.__tooltip.hide();
+						d3.select(t).transition().style("opacity", 1)
+					}, "tooltip-out")
 
 				return this;
 			}
@@ -1427,7 +1430,7 @@ var x,y;
 
 			var selection = context.selection ? context.selection() : context;
 
-			if(!chart.inner()){
+			if (!chart.inner()) {
 				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
 				var size_info = jg.size_info(".bar-chart-" + chart.__id)
 				chart.__size_info = size_info
@@ -1441,7 +1444,7 @@ var x,y;
 				key = chart.key(),						   //String of key
 				list = chart.list(),					   //String of list
 				stack_mode = chart.stack_mode();			// boolean informs if is staked visualization
-			
+
 			if (width < margin.left + margin.right + 40)
 				margin.right = 0, margin.left = -1;
 			if (height < margin.top + margin.bottom + 10)
@@ -1452,7 +1455,7 @@ var x,y;
 			chart.margin(margin);
 
 			var g;
-			if(!chart.inner()){
+			if (!chart.inner()) {
 				//Tags
 				//Insert
 				selection.selectAll("svg").data([null]).enter().append("svg")
@@ -1463,7 +1466,7 @@ var x,y;
 					.attr("transform", `translate(${margin.left},${margin.top})`)
 				//Update
 				g = selection.select("g");
-			}else{
+			} else {
 				selection.selectAll("g").data([null]).enter().append("g");
 				g = selection.select("g");
 			}
@@ -1478,19 +1481,19 @@ var x,y;
 			var h = chart.y_range()[0];
 
 			x = chart.x_scale().range(chart.x_range()),
-			y = chart.y_scale().range(chart.y_range());
+				y = chart.y_scale().range(chart.y_range());
 
 			var totals = []; // stacked mode
 			var xGroup = []; // grouped mode
-			chart.data().map((d,i)=>{
+			chart.data().map((d, i) => {
 				totals.push(d[list].reduce((total, numero) => total + numero, 0));
-				xGroup.push(d3.scaleBand().domain(d[list]).range([0,x.bandwidth()]));
+				xGroup.push(d3.scaleBand().domain(d[list]).range([0, x.bandwidth()]));
 			});
 
 			//temp = ([chart.data(),totals,xGroup]) see this values on out context
 
-			if(stack_mode)
-				y.domain([0,d3.max(totals)])
+			if (stack_mode)
+				y.domain([0, d3.max(totals)])
 
 			var xAxis = chart.x_axis().scale(x),
 				yAxis = chart.y_axis().scale(y);
@@ -1506,12 +1509,12 @@ var x,y;
 
 			//Conditional Transition
 			if (transition) {
-				xAxisGroup.transition().delay(transition.delay + transition.duration * (!chart.__stack_mode_last && stack_mode?0.7:0.3))
-					.duration(transition.duration * (!chart.__stack_mode_last && stack_mode?0.3:0.4))
+				xAxisGroup.transition().delay(transition.delay + transition.duration * (!chart.__stack_mode_last && stack_mode ? 0.7 : 0.3))
+					.duration(transition.duration * (!chart.__stack_mode_last && stack_mode ? 0.3 : 0.4))
 					.call(xAxis)
 					.attr("transform", `translate(0,${h})`);
-				yAxisGroup.transition().delay(transition.delay + transition.duration * (!chart.__stack_mode_last && stack_mode?0.3:0.7))
-					.duration(transition.duration * (!chart.__stack_mode_last && stack_mode?0.4:0.3))
+				yAxisGroup.transition().delay(transition.delay + transition.duration * (!chart.__stack_mode_last && stack_mode ? 0.3 : 0.7))
+					.duration(transition.duration * (!chart.__stack_mode_last && stack_mode ? 0.4 : 0.3))
 					.call(yAxis);
 			} else {
 				xAxisGroup.call(xAxis)
@@ -1519,123 +1522,123 @@ var x,y;
 				yAxisGroup
 					.call(yAxis);
 			}
-			
+
 			//Columns stackbar
 			//Insert
 			var c_stackbars = g.selectAll(".c-stackbar")
-					.data(chart.data()).enter().append("g")
-					.attr("class", (d,i)=>"c-stackbar c-stackbar-"+i)
-					.attr("transform", function (d) { return `translate(${x(d[key])},0)` })
-					.style("opacity",0)
+				.data(chart.data()).enter().append("g")
+				.attr("class", (d, i) => "c-stackbar c-stackbar-" + i)
+				.attr("transform", function (d) { return `translate(${x(d[key])},0)` })
+				.style("opacity", 0)
 
 			c_stackbars = g.selectAll(".c-stackbar")
-					.selectAll("rect")
-					.data((e,group)=>{
-						return e[list].map((d,i)=>{
-							return {d:d,i:i,group:group,key:e.key}
-						})
-					}).enter().append("rect")
-					.attr("class", (d,i)=>`stackbar stackbar-${i}`)
-					.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
-					.attr("height", (d)=>((!chart.__stack_mode_last && stack_mode)?h-y(d.d):1))
-					.attr("y", (d)=>((!chart.__stack_mode_last && stack_mode)?y(d.stack):y(0)))
-					.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
-					.attr("fill", color)
-					.style("opacity",0)
-				
-			
-					
-			
+				.selectAll("rect")
+				.data((e, group) => {
+					return e[list].map((d, i) => {
+						return { d: d, i: i, group: group, key: e.key }
+					})
+				}).enter().append("rect")
+				.attr("class", (d, i) => `stackbar stackbar-${i}`)
+				.attr("width", (d) => stack_mode ? x.bandwidth() : xGroup[d.group].bandwidth())
+				.attr("height", (d) => ((!chart.__stack_mode_last && stack_mode) ? h - y(d.d) : 1))
+				.attr("y", (d) => ((!chart.__stack_mode_last && stack_mode) ? y(d.stack) : y(0)))
+				.attr("x", (d) => stack_mode ? 0 : xGroup[d.group](d.d))
+				.attr("fill", color)
+				.style("opacity", 0)
+
+
+
+
 			//Remove
 			c_stackbars = g.selectAll(".c-stackbar").data(chart.data()).exit();
-			stackbars = g.selectAll(".c-stackbar").data(chart.data()).selectAll(".stackbar").data((d)=>d[list]).exit();
+			stackbars = g.selectAll(".c-stackbar").data(chart.data()).selectAll(".stackbar").data((d) => d[list]).exit();
 			if (transition) {
-				c_stackbars.style("opacity",1);
+				c_stackbars.style("opacity", 1);
 				c_stackbars.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.style("opacity",0);
-				
+					.style("opacity", 0);
+
 				c_stackbars.transition().delay(transition.delay + transition.duration * 0.3).remove()
 
-				stackbars.style("opacity",1);
+				stackbars.style("opacity", 1);
 				stackbars.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.style("opacity",0);
-				
+					.style("opacity", 0);
+
 				stackbars.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
-				c_stackbars.remove(),stackbars.remove()
-			
+				c_stackbars.remove(), stackbars.remove()
+
 			//Update
 			c_stackbars = g.selectAll(".c-stackbar")
 				.data(chart.data())
 			stackbars = c_stackbars.selectAll(".stackbar")
-			.data((e,group)=>{
+				.data((e, group) => {
 					stack_cumul = 0;
-					return e[list].map((d,i)=>{
+					return e[list].map((d, i) => {
 						stack_cumul += d;
-						var ret = {d:d,i:i,group:group,stack:stack_cumul}
+						var ret = { d: d, i: i, group: group, stack: stack_cumul }
 						ret[key] = e[key];
 						return ret;
 					})
 				}).call(chart.__event_manager.call());
-			
+
 			if (transition) {
 				// transition 2 - position
 				c_stackbars.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity",1)
+					.attr("transform", function (d) { return `translate(${x(d.key)},0)` }).style("opacity", 1)
 
-				if(!chart.__stack_mode_last && stack_mode){
+				if (!chart.__stack_mode_last && stack_mode) {
 					stackbars
 						.transition()
-							.delay(transition.delay + transition.duration * 0.3)
-							.duration(transition.duration * 0.4)
+						.delay(transition.delay + transition.duration * 0.3)
+						.duration(transition.duration * 0.4)
 						.attr("fill", color)
-						.style("opacity",1)
-							.ease(transition.ease)
-						.attr("height", (d)=>(h-y(d.d)))
-						.attr("y",(d)=> stack_mode?y(d.stack):y(d.d));
+						.style("opacity", 1)
+						.ease(transition.ease)
+						.attr("height", (d) => (h - y(d.d)))
+						.attr("y", (d) => stack_mode ? y(d.stack) : y(d.d));
 
 
-							
+
 
 					stackbars
 						.transition()
-							.delay(transition.delay + transition.duration * 0.7)
-							.duration(transition.duration * 0.3)
-						.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
-						.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
-				}else{
+						.delay(transition.delay + transition.duration * 0.7)
+						.duration(transition.duration * 0.3)
+						.attr("width", (d) => stack_mode ? x.bandwidth() : xGroup[d.group].bandwidth())
+						.attr("x", (d) => stack_mode ? 0 : xGroup[d.group](d.d))
+				} else {
 					stackbars
 						.transition()
-							.delay(transition.delay + transition.duration * 0.3)
-							.duration(transition.duration * 0.4)
-						.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
-						.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
+						.delay(transition.delay + transition.duration * 0.3)
+						.duration(transition.duration * 0.4)
+						.attr("width", (d) => stack_mode ? x.bandwidth() : xGroup[d.group].bandwidth())
+						.attr("x", (d) => stack_mode ? 0 : xGroup[d.group](d.d))
 						.attr("fill", color)
-						.style("opacity",1);
+						.style("opacity", 1);
 
 					stackbars
 						.transition()
-							.delay(transition.delay + transition.duration * 0.7)
-							.duration(transition.duration * 0.3)
-							.ease(transition.ease)
-						.attr("height", (d)=>(h-y(d.d)))
-						.attr("y",(d)=> stack_mode?y(d.stack):y(d.d))
-						
+						.delay(transition.delay + transition.duration * 0.7)
+						.duration(transition.duration * 0.3)
+						.ease(transition.ease)
+						.attr("height", (d) => (h - y(d.d)))
+						.attr("y", (d) => stack_mode ? y(d.stack) : y(d.d))
+
 				}
 
-				
+
 			} else {
 				c_stackbars
 					.attr("transform", function (d) {
 						return `translate(${x(d[key])},0)`
-					}).style("opacity",1);
+					}).style("opacity", 1);
 				stackbars
-					.attr("width", (d)=>stack_mode?x.bandwidth():xGroup[d.group].bandwidth())
-					.attr("x",(d)=> stack_mode?0:xGroup[d.group](d.d))
-					.attr("height", (d)=>(h-y(d.d)))
-					.attr("y",(d)=> stack_mode?y(d.stack):y(d.d))
+					.attr("width", (d) => stack_mode ? x.bandwidth() : xGroup[d.group].bandwidth())
+					.attr("x", (d) => stack_mode ? 0 : xGroup[d.group](d.d))
+					.attr("height", (d) => (h - y(d.d)))
+					.attr("y", (d) => stack_mode ? y(d.stack) : y(d.d))
 					.attr("fill", color)
-					.style("opacity",1);
+					.style("opacity", 1);
 
 			}
 
@@ -1659,7 +1662,7 @@ var x,y;
 				if (data instanceof Array) {
 					this.__data = data;
 					return this;
-				} else if(data)
+				} else if (data)
 					random = true;
 			}
 			if (this.__data == undefined)
@@ -1670,8 +1673,9 @@ var x,y;
 						jg.getRandom(2, 3),// min value
 						jg.getRandom(4, 5))// max value
 						.map(function (d, i) {
-							d = jg.generate(d,40,350);
-							 return { key: "d" + i, list: d } })
+							d = jg.generate(d, 40, 350);
+							return { key: "d" + i, list: d }
+						})
 			}
 			return data != undefined ? this : this.__data;
 		}
@@ -1686,11 +1690,11 @@ var x,y;
 		 * when true, the width and heigth parameters should be defined to creation and
 		 * redraw.
 		 */
-		chart.inner = function(inner){
-			if(inner!=undefined){
+		chart.inner = function (inner) {
+			if (inner != undefined) {
 				chart.__inner = inner;
 				return this;
-			}else{
+			} else {
 				return chart.__inner;
 			}
 
@@ -1754,15 +1758,15 @@ var x,y;
 		 */
 		chart.color = function (color) {
 			if (color) {
-				if(color instanceof Function)
+				if (color instanceof Function)
 					this.__color = color;
-				else if(color instanceof Array)
-					this.__color = ((d,i)=>color[i]);
-				else	
+				else if (color instanceof Array)
+					this.__color = ((d, i) => color[i]);
+				else
 					this.__color = color;
 				return this;
 			}
-			return this.__color || ((d,i)=>(d3.schemeCategory10[i]));
+			return this.__color || ((d, i) => (d3.schemeCategory10[i]));
 		}
 		chart.__key = undefined
 		/**
@@ -1819,7 +1823,7 @@ var x,y;
 		chart.x_domain = function (domain) {
 			var a = this;
 			if (domain) {
-				if (domain instanceof Array){
+				if (domain instanceof Array) {
 					this.__x_domain = domain;
 					return this;
 				}
@@ -1886,12 +1890,12 @@ var x,y;
 				if (domain instanceof Array)
 					this.__y_domain = domain;
 			} return this.__y_domain ||
-				[0,d3.max(this.data(),
+				[0, d3.max(this.data(),
 					function (d) {
-						return d3.max(d[a.list()],d=>d)
+						return d3.max(d[a.list()], d => d)
 					})]
-				
-				
+
+
 		}
 		chart.__y_range = undefined
 		/**
@@ -1933,7 +1937,7 @@ var x,y;
 		 */
 		chart.stack_mode = function (stack_mode) {
 			if (stack_mode) {
-				if(stack_mode == -1)
+				if (stack_mode == -1)
 					this.__stack_mode = !this.__stack_mode;
 				else
 					this.__stack_mode = stack_mode;
@@ -1971,19 +1975,19 @@ var x,y;
 		 * @param {String, Function} text
 		 * 
 		 */
-		chart.tooltip  = function(text){
-			if(text){
+		chart.tooltip = function (text) {
+			if (text) {
 				this.__tooltip.orientation("bottom-left");
-				this.on("mouseover",(d,i,e,t)=>{
+				this.on("mouseover", (d, i, e, t) => {
 					var p = t.getBoundingClientRect();
-					chart.__tooltip.html(text instanceof Function? text(d,i,e,t): text)
-						.show(p.x+p.width,p.y)
-					d3.select(t).style("opacity",1.0).transition().style("opacity",0.7)
-				},"tooltip-in")
-				.on("mouseout",(d,i,e,t)=>{
-					chart.__tooltip.hide();
-					d3.select(t).transition().style("opacity",1)
-				},"tooltip-out")
+					chart.__tooltip.html(text instanceof Function ? text(d, i, e, t) : text)
+						.show(p.x + p.width, p.y)
+					d3.select(t).style("opacity", 1.0).transition().style("opacity", 0.7)
+				}, "tooltip-in")
+					.on("mouseout", (d, i, e, t) => {
+						chart.__tooltip.hide();
+						d3.select(t).transition().style("opacity", 1)
+					}, "tooltip-out")
 
 				return this;
 			}
@@ -1998,7 +2002,7 @@ var x,y;
 
 	jg.__chart_donut = 0;
 	/**
-	 * Create a bar chart send only the data set with the parameters key and value.
+	 * Create a slice chart send only the data set with the parameters key and value.
 	 * Some settings can be made, like change the name of parameters of data.
 	 * @param {Array} data dataset with parameters key and value
 	 */
@@ -2012,31 +2016,26 @@ var x,y;
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			
-			if(!chart.inner()){
-				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
-				var size_info = jg.size_info(".bar-chart-" + chart.__id)
+
+			if (!chart.inner()) {
+				selection.classed("donut-chart", true).classed("donut-chart-" + chart.__id, true);
+				var size_info = jg.size_info(".donut-chart-" + chart.__id)
 				chart.__size_info = size_info
-				selection.classed("bar-chart-" + chart.__id, false);
+				selection.classed("donut-chart-" + chart.__id, false);
 			}
 
 			var width = chart.width(),		//Width of Chart
 				height = chart.height(),	  //Height of chart
-				margin = chart.margin()					  //Margin of chart
-			if (width < margin.left + margin.right + 40)
-				margin.right = 0, margin.left = -1;
-			if (height < margin.top + margin.bottom + 10)
-				margin.top = 1, margin.bottom = 3;
-			if (height < margin.top + margin.bottom + 2)
-				margin.top = 0, margin.bottom = 0;
-			// TODO vai mas não volta - corrigir depois (eixos)
-			chart.margin(margin);
-			color = chart.color(),					   //Function to define color
+				margin = chart.margin(),					  //Margin of chart
+				color = chart.color(),					   //Function to define color
 				key = chart.key(),						   //String of key
 				value = chart.value();					   //String of value
-			
+
+			var radius = Math.min(width, height) / 2 - margin;
+			var inner_radius = radius * chart.inner_radius();
+
 			var g;
-			if(!chart.inner()){
+			if (!chart.inner()) {
 				//Tags
 				//Insert
 				selection.selectAll("svg").data([null]).enter().append("svg")
@@ -2044,96 +2043,70 @@ var x,y;
 				var svg = selection.select("svg").attr("width", width).attr("height", height);
 				//Insert
 				svg.selectAll("g").data([null]).enter().append("g")
-					.attr("transform", `translate(${margin.left},${margin.top})`)
+					.attr("transform", `translate(${width / 2},${height / 2})`)
 				//Update
 				g = selection.select("g");
-			}else{
+			} else {
 				selection.selectAll("g").data([null]).enter().append("g");
 				g = selection.select("g");
 			}
-			
+
 
 			//Conditional Transition
 			if (transition)
 				g.transition().delay(transition.delay).duration(transition.duration)
-					.attr("transform", `translate(${margin.left},${margin.top})`);
+					.attr("transform", `translate(${width / 2},${height / 2})`);
 			else
-				g.attr("transform", `translate(${margin.left},${margin.top})`);
+				g.attr("transform", `translate(${width / 2},${height / 2})`);
 
-			var h = chart.y_range()[0];
-
-			var x = chart.x_scale().range(chart.x_range())
-				,
-				y = chart.y_scale().range(chart.y_range());
-
-			var xAxis = chart.x_axis().scale(x),
-				yAxis = chart.y_axis().scale(y);
-
+			//Slices
 			//Insert
-			g.selectAll(".chart-axis").data([{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
-				.attr("class", function (d) { return "chart-axis chart-axis-" + d.k })
-				.attr("transform", function (d) { if (d.k == "x") return `translate(0,${h})` });
+			var data = chart.data();
+			data.map((d, i) => { d.ord = i });
 
-			//Update
-			var xAxisGroup = g.select(".chart-axis-x"),
-				yAxisGroup = g.select(".chart-axis-y")
+			var pie = d3.pie()
+				.sort((d1, d2) => (d1.ord > d2.ord ? 1 : (d1.ord < d2.ord ? -1 : 0)))
+				.value((d) => d[value])
 
-			//Conditional Transition
-			if (transition) {
-				xAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
-					.duration(transition.duration * 0.4)
-					.call(xAxis)
-					.attr("transform", `translate(0,${h})`);
-				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.7)
-					.duration(transition.duration * 0.3)
-					.call(yAxis);
-			} else {
-				xAxisGroup.call(xAxis)
-					.attr("transform", `translate(0,${h})`);
-				yAxisGroup
-					.call(yAxis);
-			}
+			var arcs = pie(data);
+			var arcGenerator = d3.arc()
+				.innerRadius(inner_radius)
+				.outerRadius(outerRadius)
+				.cornerRadius(0);
 
-			//Bars
-			//Insert
-			var bars = g.selectAll(".bar")
-				.data(chart.data()).enter()
+			var slices = g.selectAll(".slice")
+				.data(arcs).enter()
 				.append("g")
-				.attr("class", (d,i)=>"bar bar-"+i)
-				.attr("transform", function (d) {
-					return `translate(${x(d[key])},${h})`
-				})
-			bars.append("rect").attr("width", x.bandwidth()).attr("fill", color);
-			//Remove
-			bars = g.selectAll(".bar").data(chart.data()).exit();
-			if (transition) {
-				var lastDomain = jg.range(bars._groups[0].length);
-				var lastX = chart.x_scale().domain(lastDomain).range(chart.x_range())
+				.attr("class", (d, i) => "slice slice-" + i)
+				.style("opacity", 1)
+				.append("path")
+				.attr("fill", color)
+				.each(() => {
+					this._current = {
+						startAngle: 0,
+						endAngle: 0
+					};
+				});
 
-				bars.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.attr("transform", function (d, i) { return `translate(${lastX(i)},${h})` })
-					.select("rect").attr("height", 0).attr("y", 0);
-				bars.transition().delay(transition.delay + transition.duration * 0.3).remove()
-			} else
-				bars.remove()
 
 			//Update
-			bars = g.selectAll(".bar").data(chart.data())
+			slices = g.selectAll(".slice").data(chart.data())
 				.call(chart.__event_manager.call());
+
 			if (transition) {
-				bars.interrupt().style("opacity",1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-					.select("rect").attr("width", x.bandwidth())
-				bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
-					.select("rect").attr("height", function (d) { return h - y(d[value]) })
-					.attr("y", function (d) { return y(d[value]) - h })
-					.attr("fill", color)
+				slices.interrupt().style("opacity", 1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+
+				slices.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
+
 			} else {
-				bars.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
+				slices.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
 					.select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[value]) })
 					.attr("y", function (d) { return y(d[value]) - h })
 					.attr("fill", color)
 			}
+
+			//Remove
+			slices = g.selectAll(".slice").data(chart.data()).exit().remove();
 
 
 		}
@@ -2180,11 +2153,11 @@ var x,y;
 		 * when true, the width and heigth parameters should be defined to creation and
 		 * redraw.
 		 */
-		chart.inner = function(inner){
-			if(inner!=undefined){
+		chart.inner = function (inner) {
+			if (inner != undefined) {
 				chart.__inner = inner;
 				return this;
-			}else{
+			} else {
 				return chart.__inner;
 			}
 
@@ -2220,43 +2193,38 @@ var x,y;
 		chart.__margin = undefined
 		/**
 		 * Defines a margin around the chart
-		 * @param {Object} send a object with params : top, bottom, left, right
+		 * @param {number} margin value of constant margin
 		 * @returns the self chart
 		 * If you dont sent a parameter, you will get the current margin of chart
 		 */
-		chart.margin = function (d) {
-			if (d) {
-				var t = {}
-				t.top = d.top || this.__margin.top;
-				t.bottom = d.bottom || this.__margin.bottom;
-				t.left = d.left || this.__margin.left;
-				t.right = d.right || this.__margin.right;
-				this.__margin = t;
+		chart.margin = function (margin) {
+			if (margin != undefined) {
+				this.__margin = margin
 				return this;
 			}
-			return chart.__margin || { top: 5, bottom: 5, left: 5, right: 5 };
+			return chart.__margin || 5;
 		}
 		chart.__color = undefined;
 		/**
-		 * Set a color rule to pattern of the stack bar to define the lines of stack bar.
+		 * Set a color rule to pattern of the stack slice to define the lines of stack slice.
 		 * This can be a value of color or a function with 
 		 * data(number), index(line), dataset(list of column) as param
-		 * @param {Function,String,Array} color The color rule to pattern of the stack bar
+		 * @param {Function,String,Array} color The color rule to pattern of the stack slice
 		 * @param {boolean} control when true, give total control to param color (be function, String or array)
 		 * @return the self chart
 		 * If you dont sent a parameter, you will get the current color rule
 		 */
 		chart.color = function (color) {
 			if (color) {
-				if(color instanceof Function)
+				if (color instanceof Function)
 					this.__color = color;
-				else if(color instanceof Array)
-					this.__color = ((d,i)=>color[i]);
-				else	
+				else if (color instanceof Array)
+					this.__color = ((d, i) => color[i]);
+				else
 					this.__color = color;
 				return this;
 			}
-			return this.__color || ((d,i)=>(d3.schemeCategory10[i]));
+			return this.__color || ((d, i) => (d3.schemeCategory10[i]));
 		}
 		chart.__key = undefined
 		/**
@@ -2285,6 +2253,21 @@ var x,y;
 				return this;
 			}
 			return this.__value || "value";
+		}
+
+		chart.__inner_radius = 0;
+		/**
+		 * Set percent of inner radius
+		 * @param {number} inner_radius value between 0 and 1
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current value inner_radius
+		 */
+		chart.inner_radius = function (inner_radius) {
+			if (inner_radius != undefined) {
+				this.__inner_radius = inner_radius;
+				return this;
+			}
+			return this.__inner_radius;
 		}
 
 		chart.__event_manager = new jg.EventManager();
@@ -2316,19 +2299,19 @@ var x,y;
 		 * @param {String, Function} text
 		 * 
 		 */
-		chart.tooltip  = function(text){
-			if(text){
+		chart.tooltip = function (text) {
+			if (text) {
 				this.__tooltip.orientation("bottom-left");
-				this.on("mouseover",(d,i,e,t)=>{
+				this.on("mouseover", (d, i, e, t) => {
 					var p = t.getBoundingClientRect();
-					chart.__tooltip.html(text instanceof Function? text(d,i,e,t): text)
-						.show(p.x+p.width,p.y)
-					d3.select(t).style("opacity",1.0).transition().style("opacity",0.7)
-				},"tooltip-in")
-				.on("mouseout",(d,i,e,t)=>{
-					chart.__tooltip.hide();
-					d3.select(t).transition().style("opacity",1)
-				},"tooltip-out")
+					chart.__tooltip.html(text instanceof Function ? text(d, i, e, t) : text)
+						.show(p.x + p.width, p.y)
+					d3.select(t).style("opacity", 1.0).transition().style("opacity", 0.7)
+				}, "tooltip-in")
+					.on("mouseout", (d, i, e, t) => {
+						chart.__tooltip.hide();
+						d3.select(t).transition().style("opacity", 1)
+					}, "tooltip-out")
 
 				return this;
 			}
@@ -2336,7 +2319,7 @@ var x,y;
 		}
 
 		chart.data(data);
-		chart.__id = jg.__chart_bar_counter++;
+		chart.__id = jg.__chart_slice_counter++;
 
 		return chart;
 	}
