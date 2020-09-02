@@ -395,10 +395,14 @@ var x,y;
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
-			var size_info = jg.size_info(".bar-chart-" + chart.__id)
-			chart.__size_info = size_info
-			selection.classed("bar-chart-" + chart.__id, false);
+			
+			if(!chart.inner()){
+				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
+				var size_info = jg.size_info(".bar-chart-" + chart.__id)
+				chart.__size_info = size_info
+				selection.classed("bar-chart-" + chart.__id, false);
+			}
+
 			var width = chart.width(),		//Width of Chart
 				height = chart.height(),	  //Height of chart
 				margin = chart.margin()					  //Margin of chart
@@ -413,17 +417,24 @@ var x,y;
 			color = chart.color(),					   //Function to define color
 				key = chart.key(),						   //String of key
 				value = chart.value();					   //String of value
-
-			//Tags
-			//Insert
-			selection.selectAll("svg").data([null]).enter().append("svg")
-			//Update
-			var svg = selection.select("svg").attr("width", width).attr("height", height);
-			//Insert
-			svg.selectAll("g").data([null]).enter().append("g")
-				.attr("transform", `translate(${margin.left},${margin.top})`)
-			//Update
-			var g = selection.select("g");
+			
+			var g;
+			if(!chart.inner()){
+				//Tags
+				//Insert
+				selection.selectAll("svg").data([null]).enter().append("svg")
+				//Update
+				var svg = selection.select("svg").attr("width", width).attr("height", height);
+				//Insert
+				svg.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`)
+				//Update
+				g = selection.select("g");
+			}else{
+				selection.selectAll("g").data([null]).enter().append("g");
+				g = selection.select("g");
+			}
+			
 
 			//Conditional Transition
 			if (transition)
@@ -515,7 +526,7 @@ var x,y;
 		 * Set data of chart as a array with parameters
 		 * specifieds in chart.key() and chart.value()
 		 * @param {Array} data list of data to set chart
-		 * @returns the self chart
+		 * @retuerns the self chart
 		 * If you don't send a parameter, you will get the current data of chart
 		 * If current data of chart is undefined of the data param sent is invalid,
 		 * the function will generate a random value to simulate chart
@@ -542,6 +553,26 @@ var x,y;
 			return data != undefined ? this : this.__data;
 		}
 
+		chart.__inner = false;
+		/**
+		 * Say inner svg container. If false, this will create a svg inselection called
+		 * If true, this will be created inner of structure selected in a svg.
+		 * @param {boolean} inner mode of creation
+		 * @returns the self chart
+		 * If you don't send a parameter, you will get the current state inner of chart
+		 * when true, the width and heigth parameters should be defined to creation and
+		 * redraw.
+		 */
+		chart.inner = function(inner){
+			if(inner!=undefined){
+				chart.__inner = inner;
+				return this;
+			}else{
+				return chart.__inner;
+			}
+
+		}
+
 		chart.__width = undefined;
 		/**
 		 * Define the width of graph
@@ -553,7 +584,7 @@ var x,y;
 				this.__width = width;
 				return this;
 			}
-			return this.__width || this.__size_info ? this.__size_info.w : undefined;
+			return this.__width || (this.__size_info ? this.__size_info.w : undefined);
 		}
 		chart.__height = undefined;
 		/**
@@ -566,7 +597,7 @@ var x,y;
 				this.__height = height;
 				return this;
 			}
-			return this.__height || this.__size_info ? this.__size_info.h : undefined;
+			return this.__height || (this.__size_info ? this.__size_info.h : undefined);
 		}
 
 		chart.__margin = undefined
@@ -827,10 +858,14 @@ var x,y;
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			selection.classed("tree_percent-chart", true).classed("tree_percent-chart-" + chart.__id, true);
-			var size_info = jg.size_info(".tree_percent-chart-" + chart.__id)
-			chart.__size_info = size_info
-			selection.classed("tree_percent-chart-" + chart.__id, false);
+
+			if(!chart.inner()){
+				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
+				var size_info = jg.size_info(".bar-chart-" + chart.__id)
+				chart.__size_info = size_info
+				selection.classed("bar-chart-" + chart.__id, false);
+			}
+
 			var width = chart.width(),		//Width of Chart
 				height = chart.height(),	  //Height of chart
 				margin = chart.margin(),					  //Margin of chart
@@ -838,16 +873,22 @@ var x,y;
 				key = chart.key(),						   //String of key
 				list = chart.list();					   //String of list
 			
-			//Tags
-			//Insert
-			selection.selectAll("svg").data([null]).enter().append("svg")
-			//Update
-			var svg = selection.select("svg").attr("width", width).attr("height", height);
-			//Insert
-			svg.selectAll("g").data([null]).enter().append("g")
-				.attr("transform", `translate(${margin.left},${margin.top})`)
-			//Update
-			var g = selection.select("g");
+			var g;
+			if(!chart.inner()){
+				//Tags
+				//Insert
+				selection.selectAll("svg").data([null]).enter().append("svg")
+				//Update
+				var svg = selection.select("svg").attr("width", width).attr("height", height);
+				//Insert
+				svg.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`)
+				//Update
+				g = selection.select("g");
+			}else{
+				selection.selectAll("g").data([null]).enter().append("g");
+				g = selection.select("g");
+			}
 
 			//Conditional Transition
 			if (transition)
@@ -1086,6 +1127,26 @@ var x,y;
 			return data != undefined ? this : this.__data;
 		}
 
+		chart.__inner = false;
+		/**
+		 * Say inner svg container. If false, this will create a svg inselection called
+		 * If true, this will be created inner of structure selected in a svg.
+		 * @param {boolean} inner mode of creation
+		 * @returns the self chart
+		 * If you don't send a parameter, you will get the current state inner of chart
+		 * when true, the width and heigth parameters should be defined to creation and
+		 * redraw.
+		 */
+		chart.inner = function(inner){
+			if(inner!=undefined){
+				chart.__inner = inner;
+				return this;
+			}else{
+				return chart.__inner;
+			}
+
+		}
+
 		chart.__width = undefined;
 		/**
 		 * Define the width of graph
@@ -1097,7 +1158,7 @@ var x,y;
 				this.__width = width;
 				return this;
 			}
-			return this.__width || this.__size_info ? this.__size_info.w : undefined;
+			return this.__width || (this.__size_info ? this.__size_info.w : undefined);
 		}
 		chart.__height = undefined;
 		/**
@@ -1110,7 +1171,7 @@ var x,y;
 				this.__height = height;
 				return this;
 			}
-			return this.__height || this.__size_info ? this.__size_info.h : undefined;
+			return this.__height || (this.__size_info ? this.__size_info.h : undefined);
 		}
 
 		chart.__margin = undefined
@@ -1365,10 +1426,14 @@ var x,y;
 				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
 
 			var selection = context.selection ? context.selection() : context;
-			selection.classed("tree_stack_group_bar", true).classed("stack_group_bar-chart-" + chart.__id, true);
-			var size_info = jg.size_info(".stack_group_bar-chart-" + chart.__id)
-			chart.__size_info = size_info
-			selection.classed("stack_group_bar-chart-" + chart.__id, false);
+
+			if(!chart.inner()){
+				selection.classed("bar-chart", true).classed("bar-chart-" + chart.__id, true);
+				var size_info = jg.size_info(".bar-chart-" + chart.__id)
+				chart.__size_info = size_info
+				selection.classed("bar-chart-" + chart.__id, false);
+			}
+
 			var width = chart.width(),		//Width of Chart
 				height = chart.height(),	  //Height of chart
 				margin = chart.margin(),					  //Margin of chart
@@ -1386,16 +1451,22 @@ var x,y;
 			// TODO vai mas não volta - corrigir depois (eixos)
 			chart.margin(margin);
 
-			//Tags
-			//Insert
-			selection.selectAll("svg").data([null]).enter().append("svg")
-			//Update
-			var svg = selection.select("svg").attr("width", width).attr("height", height);
-			//Insert
-			svg.selectAll("g").data([null]).enter().append("g")
-				.attr("transform", `translate(${margin.left},${margin.top})`)
-			//Update
-			var g = selection.select("g");
+			var g;
+			if(!chart.inner()){
+				//Tags
+				//Insert
+				selection.selectAll("svg").data([null]).enter().append("svg")
+				//Update
+				var svg = selection.select("svg").attr("width", width).attr("height", height);
+				//Insert
+				svg.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`)
+				//Update
+				g = selection.select("g");
+			}else{
+				selection.selectAll("g").data([null]).enter().append("g");
+				g = selection.select("g");
+			}
 
 			//Conditional Transition
 			if (transition)
@@ -1571,25 +1642,6 @@ var x,y;
 			chart.__stack_mode_last = stack_mode;
 		}
 
-		chart.__stack_mode = undefined
-		/**
-		 * Say if is stack mode. This should be a boolean
-		 * @param {boolean} stack_mode informs stack mode
-		 * @return the self chart
-		 * If you dont sent a parameter, you will get the current status mode
-		 * If you sent -1 number, this will be toggle status
-		 */
-		chart.stack_mode = function (stack_mode) {
-			if (stack_mode) {
-				if(stack_mode == -1)
-					this.__stack_mode = !this.__stack_mode;
-				else
-					this.__stack_mode = stack_mode;
-				return this;
-			}
-			return this.__stack_mode || false;
-		}
-
 		chart.__data = undefined
 		/**
 		 * Set data of chart as a array with parameters
@@ -1624,6 +1676,26 @@ var x,y;
 			return data != undefined ? this : this.__data;
 		}
 
+		chart.__inner = false;
+		/**
+		 * Say inner svg container. If false, this will create a svg inselection called
+		 * If true, this will be created inner of structure selected in a svg.
+		 * @param {boolean} inner mode of creation
+		 * @returns the self chart
+		 * If you don't send a parameter, you will get the current state inner of chart
+		 * when true, the width and heigth parameters should be defined to creation and
+		 * redraw.
+		 */
+		chart.inner = function(inner){
+			if(inner!=undefined){
+				chart.__inner = inner;
+				return this;
+			}else{
+				return chart.__inner;
+			}
+
+		}
+
 		chart.__width = undefined;
 		/**
 		 * Define the width of graph
@@ -1635,7 +1707,7 @@ var x,y;
 				this.__width = width;
 				return this;
 			}
-			return this.__width || this.__size_info ? this.__size_info.w : undefined;
+			return this.__width || (this.__size_info ? this.__size_info.w : undefined);
 		}
 		chart.__height = undefined;
 		/**
@@ -1648,7 +1720,7 @@ var x,y;
 				this.__height = height;
 				return this;
 			}
-			return this.__height || this.__size_info ? this.__size_info.h : undefined;
+			return this.__height || (this.__size_info ? this.__size_info.h : undefined);
 		}
 
 		chart.__margin = undefined
@@ -1849,6 +1921,25 @@ var x,y;
 				return this;
 			}
 			return this.__y_axis || d3.axisLeft();
+		}
+
+		chart.__stack_mode = undefined
+		/**
+		 * Say if is stack mode. This should be a boolean
+		 * @param {boolean} stack_mode informs stack mode
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current status mode
+		 * If you sent -1 number, this will be toggle status
+		 */
+		chart.stack_mode = function (stack_mode) {
+			if (stack_mode) {
+				if(stack_mode == -1)
+					this.__stack_mode = !this.__stack_mode;
+				else
+					this.__stack_mode = stack_mode;
+				return this;
+			}
+			return this.__stack_mode || false;
 		}
 
 		chart.__event_manager = new jg.EventManager();

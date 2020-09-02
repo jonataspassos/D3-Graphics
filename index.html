@@ -11,7 +11,8 @@
         </style>
     </head>
     <body>
-        <div id="vis"></div>
+        <div id="vis"><svg width="400" height="300"></svg></div>
+
 
         <script>
             //*
@@ -19,9 +20,11 @@
                 .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
                 //.color(["#4f9887","#922717","steelblue","black","green"]);
 
+            chart.inner(true).width(400).height(300);
+
             //*
             function repeat() {
-                setTimeout(() => d3.select("#vis").transition().duration(2000).ease(d3.easeBounce).call(chart.data(jg.getRandom(0,2))).on("end", repeat), 1000) 
+                setTimeout(() => d3.select("#vis").select("svg").transition().duration(2000).ease(d3.easeBounce).call(chart.data(jg.getRandom(0,2))).on("end", repeat), 1000) 
             }
             repeat();/**/
 
