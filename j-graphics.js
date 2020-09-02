@@ -5,6 +5,16 @@ var x, y;
 	jg.y = {}
 
 	/**
+	 * This function copy values of object (JSON Compatible)
+	 * and returns another independent instance
+	 * @param {Object} object
+	 * @return object like parameter
+	 */
+	jg.deep_copy = function (object) {
+		return JSON.parse(JSON.stringify(object));
+	}
+
+	/**
 	 * Returns a array with values orders as like samples:
 	 * range(5) -> [0,1,2,3,4]
 	 * range(2,10) -> [2,3,4,5,6,7,8,9]
@@ -431,7 +441,8 @@ var x, y;
 				//Update
 				g = selection.select("g");
 			} else {
-				selection.selectAll("g").data([null]).enter().append("g");
+				selection.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`);
 				g = selection.select("g");
 			}
 
@@ -886,7 +897,8 @@ var x, y;
 				//Update
 				g = selection.select("g");
 			} else {
-				selection.selectAll("g").data([null]).enter().append("g");
+				selection.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`);
 				g = selection.select("g");
 			}
 
@@ -1467,7 +1479,8 @@ var x, y;
 				//Update
 				g = selection.select("g");
 			} else {
-				selection.selectAll("g").data([null]).enter().append("g");
+				selection.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`);
 				g = selection.select("g");
 			}
 
@@ -2047,7 +2060,8 @@ var x, y;
 				//Update
 				g = selection.select("g");
 			} else {
-				selection.selectAll("g").data([null]).enter().append("g");
+				selection.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${width / 2},${height / 2})`);
 				g = selection.select("g");
 			}
 
@@ -2060,53 +2074,80 @@ var x, y;
 				g.attr("transform", `translate(${width / 2},${height / 2})`);
 
 			//Slices
-			//Insert
-			var data = chart.data();
+			var data = jg.deep_copy(chart.data());
+			
 			data.map((d, i) => { d.ord = i });
 
 			var pie = d3.pie()
 				.sort((d1, d2) => (d1.ord > d2.ord ? 1 : (d1.ord < d2.ord ? -1 : 0)))
 				.value((d) => d[value])
-
+			
 			var arcs = pie(data);
-			var arcGenerator = d3.arc()
+			
+			var arc_gen = d3.arc()
 				.innerRadius(inner_radius)
-				.outerRadius(outerRadius)
-				.cornerRadius(0);
+				.outerRadius(radius)
+				.cornerRadius((inner_radius-radius)*chart.corner_radius());
 
+			//Insert
+			var data_insert = [];
+			for(var i=0;i<chart.data().length;i++)
+				data_insert.push(0);
+
+			var pie_insert = (d3.pie())(data_insert)
+				
 			var slices = g.selectAll(".slice")
-				.data(arcs).enter()
+				.data(pie_insert).enter()
 				.append("g")
 				.attr("class", (d, i) => "slice slice-" + i)
-				.style("opacity", 1)
+				.style("opacity",0)
 				.append("path")
 				.attr("fill", color)
-				.each(() => {
-					this._current = {
-						startAngle: 0,
-						endAngle: 0
-					};
-				});
-
-
-			//Update
-			slices = g.selectAll(".slice").data(chart.data())
-				.call(chart.__event_manager.call());
-
-			if (transition) {
-				slices.interrupt().style("opacity", 1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-
-				slices.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
-
-			} else {
-				slices.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-					.select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[value]) })
-					.attr("y", function (d) { return y(d[value]) - h })
-					.attr("fill", color)
-			}
+				.attr("d",arc_gen)
+				.each(function () { this._current = { startAngle: Math.PI*2, endAngle: Math.PI*2 }; });
 
 			//Remove
-			slices = g.selectAll(".slice").data(chart.data()).exit().remove();
+			slices = g.selectAll(".slice").data(chart.data()).exit()
+			if(transition){
+				slices.transition().delay(transition.delay)
+					.duration(transition.duration * 0.3)
+					.style("opacity",0)
+				slices.transition()
+					.delay(transition.delay + transition.duration * 0.3)
+					.remove();
+			}else{
+				slices.remove();
+			}
+
+			//Update
+			
+			
+			slices = g.selectAll(".slice").data(arcs)
+			
+			if (transition) {
+			
+				slices.interrupt().style("opacity",1)
+					.transition().delay(transition.delay + transition.duration * 0.3)
+					.duration(transition.duration * 0.7)
+					.ease(transition.ease)
+					.select("path")
+					.attr("fill", color)
+					.attrTween("d", function (d) {
+						var interpolate = d3.interpolate(this._current, d);
+						this._current = interpolate(0);
+						return function (t) {
+							return arc_gen(interpolate(t));
+						};
+					});
+			} else {
+				slices
+					.style("opacity",1)
+					.select("path")
+					.attr("fill", color)
+					.attr("d",arc_gen)
+			}
+			g.selectAll(".slice").data(chart.data())
+				.call(chart.__event_manager.call());
 
 
 		}
@@ -2268,6 +2309,21 @@ var x, y;
 				return this;
 			}
 			return this.__inner_radius;
+		}
+
+		chart.__corner_radius = 0;
+		/**
+		 * Set percent of corner radius
+		 * @param {number} corner_radius value between 0 and 1
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current value corner_radius
+		 */
+		chart.corner_radius = function (corner_radius) {
+			if (corner_radius != undefined) {
+				this.__corner_radius = corner_radius;
+				return this;
+			}
+			return this.__corner_radius;
 		}
 
 		chart.__event_manager = new jg.EventManager();

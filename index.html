@@ -17,27 +17,35 @@
         <script>
             //*
             chart = jg.chart_donut().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
-                .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
-                //.color(["#4f9887","#922717","steelblue","black","green"]);
+                .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d||d.value}`})
+                //.color(["#4f9887","#922717","steelblue","black","green"])
+                //.stack_mode(-1)
+                .inner_radius(0.5)
+                .corner_radius(0.2)
 
-            //chart.inner(true).width(400).height(300);
+            chart.inner(true).width(400).height(300);
 
             //*
             function repeat() {
                 setTimeout(() => d3.select("#vis")
-                    /** /.select("svg")/**/
+                    .select("svg")
                     .transition().duration(2000)
                     .ease(d3.easeBounce)
                     .call(chart.data(jg.getRandom(0,2)))
-                    .on("end", repeat),
-                1000) 
+                    .on("end", repeat)
+                ,1000) 
             }
             repeat();/**/
 
             //d3.select("#vis").transition().duration(2000).call(chart);
 
-            //setInterval(() => d3.select("#vis").call(chart.data(true).stack_mode(-1)), 3000)
-            //d3.select("#vis").call(chart.data(true).stack_mode(-1));
+            /*
+            setInterval(() => {
+                d3.select("#vis").call(chart.data(true)
+                    //.stack_mode(-1)
+                )
+            }, 3000)/**/
+            //d3.select("#vis").call(chart.data(true));
 
 
             /*
