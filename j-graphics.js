@@ -2496,19 +2496,23 @@ var x, y;
 				.data(chart.data()).enter()
 				.append("g")
 				.attr("class", (d, i) => "line line-" + i)
-				.attr("transform", function (d) {
-					return `translate(0,${h})`
-				}).style("opacity", 0)
+				.style("opacity", 0)
 				.append("path").attr("d", (d) => {
 
-					var ret = `M ${x(d[list][0][key])+x.bandwidth()/2} 0`;
+					var ret = `M ${x(d[list][0][key]) + x.bandwidth() / 2} ${h}`;
 					for (var i = 1; i < d[list].length; i++) {
-						ret += `\nL ${x(d[list][i][key])+x.bandwidth()/2} 0`;
+						ret += `\nL ${x(d[list][i][key]) + x.bandwidth() / 2} ${h}`;
 					}
 					return ret;
 				}).attr("stroke", color)
-				.attr("stroke-width",chart.stroke())
-				.attr("fill","none");
+				.attr("stroke-width", chart.stroke())
+				.attr("fill", "none")
+				.each(function (d) { 
+					this._current = jg.deep_copy(d); 
+					this._current[list].map((d)=>{
+						d[value] = 0;
+					})
+				});
 			//Remove
 			lines = g.selectAll(".line").data(chart.data()).exit();
 			if (transition) {
@@ -2518,53 +2522,85 @@ var x, y;
 					.attr("d", (d, i, j) => {
 						var last_d = d3.select(j[i]).attr("d");
 						var last_x = ([...last_d
-								.matchAll(/[ML] (\d+\.?\d*) \d+\.?\d*/g)
-							]).map(d => parseFloat(d[1]));
+							.matchAll(/[ML] (\d+\.?\d*) \d+\.?\d*/g)
+						]).map(d => parseFloat(d[1]));
 
-						var ret = `M ${last_x[0]} 0`;
+						var ret = `M ${last_x[0]} ${h}`;
 						for (var i = 1; i < last_x.length; i++) {
-							ret += `\nL ${last_x[i]} 0`;
+							ret += `\nL ${last_x[i]} ${h}`;
 						}
 						return ret;
 					})
 				lines.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
 				lines.remove()
-			
+
 			//Update
 			lines = g.selectAll(".line").data(chart.data())
 				.call(chart.__event_manager.call());
+
+			function line_format(a,n) {
+				var ret = `M ${x(a[list][0][key]) + x.bandwidth() / 2} ${y(a[list][0][value])}`;
+				for (var i = 1; i < a[list].length; i++) {
+					ret += `\nL ${x(a[list][i][key]) + x.bandwidth() / 2} ${y(a[list][i][value])}`;
+				}
+				for(var j=i;j<i+n;j++)
+					ret += `\nL ${x(a[list][i-1][key]) + x.bandwidth() / 2} ${y(a[list][i-1][value])}`;
+				return ret;
+			}
 			if (transition) {
-				lines.interrupt().style("opacity", 1)
+				lines.interrupt()
+					.select("path")
+					.attr("d",(d,i,j)=>{
+						var last_d = d3.select(j[i]).attr("d");
+						var last_x_y = ([...last_d
+							.matchAll(/[ML] (\d+\.?\d*) (\d+\.?\d*)/g)
+						]);
+						var n = d[list].length-last_x_y.length;
+						var repeat = last_x_y[last_x_y.length-1];
+						for(var k=0;k<n;k++)
+							last_d+=`\nL ${repeat[1]} ${repeat[2]}`;
+						return last_d;
+					})
+
+				lines
 					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.7)
-					.attr("transform", function (d) { return `translate(0,${h})` })
-					.select("path").attr("d", (d) => {
-						var ret = `M ${x(d[list][0][key])+x.bandwidth()/2} ${-y(d[list][0][value])}`;
-						for (var i = 1; i < d[list].length; i++) {
-							ret += `\nL ${x(d[list][i][key])+x.bandwidth()/2} ${-y(d[list][i][value])}`;
-						}
-						return ret;
-					})	
+					.style("opacity", 1)
+					.select("path")
+					.ease(transition.ease)
+					.attr("d",(d,i,j)=>{
+						var last_d = d3.select(j[i]).attr("d");
+						var last_x_y = ([...last_d
+							.matchAll(/[ML] (\d+\.?\d*) (\d+\.?\d*)/g)
+						]);
+						var n = last_x_y.length-d[list].length;
+
+						return line_format(d,n);
+					})
 					.attr("stroke", color)
-					.attr("stroke-width",chart.stroke())
-					.attr("fill","none")
+					.attr("stroke-width", chart.stroke())
+					.attr("fill", "none")
 				
+				lines
+				.transition().delay(transition.delay + transition.duration)
+				.attr("d",line_format);
+
 				/** */
 			} else {
-				lines.attr("transform", function (d) { return `translate(0,${h})` })
+				lines
 					.style("opacity", 1)
 					.select("path")
 					.attr("d", (d) => {
-						var ret = `M ${x(d[list][0][key])+x.bandwidth()/2} ${-y(d[list][0][value])}`;
+						var ret = `M ${x(d[list][0][key]) + x.bandwidth() / 2} ${y(d[list][0][value])}`;
 						for (var i = 1; i < d[list].length; i++) {
-							ret += `\nL ${x(d[list][i][key])+x.bandwidth()/2} ${-y(d[list][i][value])}`;
+							ret += `\nL ${x(d[list][i][key]) + x.bandwidth() / 2} ${y(d[list][i][value])}`;
 						}
 						return ret;
-					})	
+					})
 					.attr("stroke", color)
-					.attr("fill","none")
+					.attr("fill", "none")
 			}
-			
+
 
 		}
 
@@ -2593,10 +2629,10 @@ var x, y;
 			if (this.__data == undefined)
 				random = true;
 			if (random) {
-				var n_elements = jg.getRandom(10, 20);
+				var n_elements = jg.getRandom(7, 12);
 
 				this.category("category").list("list").key("key").value("value")
-					.__data = jg.range(jg.getRandom(1, 6))//n elements
+					.__data = jg.range(jg.getRandom(1, 4))//n elements
 						.map(function (d) {
 							return {
 								category: "c" + d,
