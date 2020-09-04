@@ -2425,6 +2425,8 @@ var x, y;
 			// TODO vai mas não volta - corrigir depois (eixos)
 			chart.margin(margin);
 			color = chart.color(),					   //Function to define color
+				category = chart.category(),						   //String of category
+				list = chart.list(),					   //String of list
 				key = chart.key(),						   //String of key
 				value = chart.value();					   //String of value
 
@@ -2475,11 +2477,11 @@ var x, y;
 			//Conditional Transition
 			if (transition) {
 				xAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
-					.duration(transition.duration * 0.4)
+					.duration(transition.duration * 0.7)
 					.call(xAxis)
 					.attr("transform", `translate(0,${h})`);
-				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.7)
-					.duration(transition.duration * 0.3)
+				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
+					.duration(transition.duration * 0.7)
 					.call(yAxis);
 			} else {
 				xAxisGroup.call(xAxis)
@@ -2488,47 +2490,81 @@ var x, y;
 					.call(yAxis);
 			}
 
-			//Bars
+			//Lines
 			//Insert
 			var lines = g.selectAll(".line")
 				.data(chart.data()).enter()
 				.append("g")
 				.attr("class", (d, i) => "line line-" + i)
 				.attr("transform", function (d) {
-					return `translate(${x(d[key])},${h})`
-				})
-			lines.append("rect").attr("width", x.bandwidth()).attr("fill", color);
+					return `translate(0,${h})`
+				}).style("opacity", 0)
+				.append("path").attr("d", (d) => {
+
+					var ret = `M ${x(d[list][0][key])+x.bandwidth()/2} 0`;
+					for (var i = 1; i < d[list].length; i++) {
+						ret += `\nL ${x(d[list][i][key])+x.bandwidth()/2} 0`;
+					}
+					return ret;
+				}).attr("stroke", color)
+				.attr("stroke-width",chart.stroke())
+				.attr("fill","none");
 			//Remove
 			lines = g.selectAll(".line").data(chart.data()).exit();
 			if (transition) {
-				var lastDomain = jg.range(lines._groups[0].length);
-				var lastX = chart.x_scale().domain(lastDomain).range(chart.x_range())
-
 				lines.transition().delay(transition.delay).duration(transition.duration * 0.3)
-					.attr("transform", function (d, i) { return `translate(${lastX(i)},${h})` })
-					.select("rect").attr("height", 0).attr("y", 0);
+					.style("opacity", 0)
+					.select("path")
+					.attr("d", (d, i, j) => {
+						var last_d = d3.select(j[i]).attr("d");
+						var last_x = ([...last_d
+								.matchAll(/[ML] (\d+\.?\d*) \d+\.?\d*/g)
+							]).map(d => parseFloat(d[1]));
+
+						var ret = `M ${last_x[0]} 0`;
+						for (var i = 1; i < last_x.length; i++) {
+							ret += `\nL ${last_x[i]} 0`;
+						}
+						return ret;
+					})
 				lines.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
 				lines.remove()
-
+			
 			//Update
 			lines = g.selectAll(".line").data(chart.data())
 				.call(chart.__event_manager.call());
 			if (transition) {
-				lines.interrupt().style("opacity", 1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
-					.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-					.select("rect").attr("width", x.bandwidth())
-				lines.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
-					.select("rect").attr("height", function (d) { return h - y(d[value]) })
-					.attr("y", function (d) { return y(d[value]) - h })
-					.attr("fill", color)
+				lines.interrupt().style("opacity", 1)
+					.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.7)
+					.attr("transform", function (d) { return `translate(0,${h})` })
+					.select("path").attr("d", (d) => {
+						var ret = `M ${x(d[list][0][key])+x.bandwidth()/2} ${-y(d[list][0][value])}`;
+						for (var i = 1; i < d[list].length; i++) {
+							ret += `\nL ${x(d[list][i][key])+x.bandwidth()/2} ${-y(d[list][i][value])}`;
+						}
+						return ret;
+					})	
+					.attr("stroke", color)
+					.attr("stroke-width",chart.stroke())
+					.attr("fill","none")
+				
+				/** */
 			} else {
-				lines.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
-					.select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[value]) })
-					.attr("y", function (d) { return y(d[value]) - h })
-					.attr("fill", color)
+				lines.attr("transform", function (d) { return `translate(0,${h})` })
+					.style("opacity", 1)
+					.select("path")
+					.attr("d", (d) => {
+						var ret = `M ${x(d[list][0][key])+x.bandwidth()/2} ${-y(d[list][0][value])}`;
+						for (var i = 1; i < d[list].length; i++) {
+							ret += `\nL ${x(d[list][i][key])+x.bandwidth()/2} ${-y(d[list][i][value])}`;
+						}
+						return ret;
+					})	
+					.attr("stroke", color)
+					.attr("fill","none")
 			}
-
+			
 
 		}
 
@@ -2557,12 +2593,14 @@ var x, y;
 			if (this.__data == undefined)
 				random = true;
 			if (random) {
+				var n_elements = jg.getRandom(10, 20);
+
 				this.category("category").list("list").key("key").value("value")
 					.__data = jg.range(jg.getRandom(1, 6))//n elements
 						.map(function (d) {
 							return {
 								category: "c" + d,
-								list: jg.generate(jg.getRandom(10, 15),//n elements
+								list: jg.generate(n_elements,//n elements
 									jg.getRandom(0, 20),// min value
 									jg.getRandom(40, 50))// max value
 									.map(function (d, i) { return { key: "d" + i, value: d } })
@@ -2741,6 +2779,7 @@ var x, y;
 		 * @param {Array} domain specify the domain
 		 * @return the self chart
 		 * If you dont sent a parameter, you will get the current x domain of chart
+		 * If x domain is not set, will be generated by keys of first row of dataset
 		 */
 		chart.x_domain = function (domain) {
 			var a = this;
@@ -2750,8 +2789,8 @@ var x, y;
 					return this;
 				}
 			} return this.__x_domain ||
-				this.data().map(function (d) {
-					return d[a.category()]
+				this.data()[0][a.list()].map(function (d) {
+					return d[a.key()]
 				})
 		}
 		chart.__x_range = undefined
@@ -2812,10 +2851,12 @@ var x, y;
 				if (domain instanceof Array)
 					this.__y_domain = domain;
 			} return this.__y_domain ||
-				d3.extent(this.data(),
+				[0, d3.max(this.data(),
 					function (d) {
-						return d[a.value()]
-					})
+						return d3.max(d[a.list()], d => d[a.value()])
+					})]
+
+
 		}
 		chart.__y_range = undefined
 		/**
@@ -2844,6 +2885,21 @@ var x, y;
 				return this;
 			}
 			return this.__y_axis || d3.axisLeft();
+		}
+
+		chart.__stroke = undefined
+		/**
+		 * Set stroke of lines
+		 * @param {String,number,function} stroke attr of lines
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current stroke
+		 */
+		chart.stroke = function (stroke) {
+			if (stroke) {
+				this.__stroke = stroke;
+				return this;
+			}
+			return this.__stroke || "2px";
 		}
 
 		chart.__event_manager = new jg.EventManager();
