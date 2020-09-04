@@ -175,6 +175,37 @@ var x, y;
 			}
 			return (this.__orientation.v + "-" + this.__orientation.h) || "top-left";
 		}
+
+		tool.__dx = undefined;
+		/**
+		 * Set horizontaly desloc position
+		 * @param {number} dx
+		 * @returns the self tooltip
+		 * If you don't send a parameter, you will get the current deloc
+		 */
+		tool.dx = function (dx) {
+			if (dx != undefined) {
+				this.__dx = dx
+				return this;
+			}
+			return this.__dx || 0;
+		}
+
+		tool.__dy = undefined;
+		/**
+		 * Set verticaly desloc position
+		 * @param {number} dy
+		 * @returns the self tooltip
+		 * If you don't send a parameter, you will get the current deloc
+		 */
+		tool.dy = function (dy) {
+			if (dy != undefined) {
+				this.__dy = dy
+				return this;
+			}
+			return this.__dy || 0;
+		}
+
 		tool.__font = undefined;
 		/**
 		 * Set font of text inner tooltip
@@ -278,7 +309,8 @@ var x, y;
 			var size = jg.size_info(".tooltip-" + this.__id);
 			var o = this.orientation(true);
 
-
+			x += this.dx();
+			y += this.dy();
 
 			x -= size.w * (o.h == "left" ? 0 : (o.h == "center" ? 0.5 : 1));
 			y -= size.h * (o.v == "top" ? 0 : (o.v == "middle" ? 0.5 : 1));
@@ -2366,11 +2398,10 @@ var x, y;
 		 */
 		chart.tooltip = function (text) {
 			if (text) {
-				this.__tooltip.orientation("bottom-left");
-				this.on("mouseover", (d, i, e, t) => {
-					var p = t.getBoundingClientRect();
+				this.__tooltip.orientation("top-left").dy(20).dx(10);
+				this.on("mousemove", (d, i, e, t) => {
 					chart.__tooltip.html(text instanceof Function ? text(d, i, e, t) : text)
-						.show(p.x + p.width, p.y)
+						.show()
 					d3.select(t).style("opacity", 1.0).transition().style("opacity", 0.7)
 				}, "tooltip-in")
 					.on("mouseout", (d, i, e, t) => {
@@ -2497,24 +2528,46 @@ var x, y;
 				.append("g")
 				.attr("class", (d, i) => "line line-" + i)
 				.style("opacity", 0)
-				.append("path").attr("d", (d) => {
 
-					var ret = `M ${x(d[list][0][key]) + x.bandwidth() / 2} ${h}`;
-					for (var i = 1; i < d[list].length; i++) {
-						ret += `\nL ${x(d[list][i][key]) + x.bandwidth() / 2} ${h}`;
-					}
-					return ret;
-				}).attr("stroke", color)
+			lines.append("path").attr("d", (d) => {
+
+				var ret = `M ${x(d[list][0][key]) + x.bandwidth() / 2} ${h}`;
+				for (var i = 1; i < d[list].length; i++) {
+					ret += `\nL ${x(d[list][i][key]) + x.bandwidth() / 2} ${h}`;
+				}
+				return ret;
+			}).attr("stroke", color)
 				.attr("stroke-width", chart.stroke())
 				.attr("fill", "none")
-				.each(function (d) { 
-					this._current = jg.deep_copy(d); 
-					this._current[list].map((d)=>{
+				.each(function (d) {
+					this._current = jg.deep_copy(d);
+					this._current[list].map((d) => {
 						d[value] = 0;
 					})
 				});
+			
+			g.selectAll(".line")
+				.data(chart.data()).selectAll(".dot").data((d, i) => {
+				return d[list].map((e) => {
+					e[category] = d[category];
+					e.cat_index = i;
+					return e;
+				})
+			}).enter().append("g")
+				.attr("class", (d, i) => `dot dot-${i}`)
+				.attr("transform", (d,i,j) => {
+					var last_d = j[i].parentElement.firstChild.attributes.d.nodeValue;
+						var last_x_y = ([...last_d
+							.match(/(\d+\.?\d*) (\d+\.?\d*)$/)
+						]);
+					return `translate(${last_x_y[1]},${last_x_y[2]})`
+				})
+				.call(chart.dots());
+
 			//Remove
-			lines = g.selectAll(".line").data(chart.data()).exit();
+			lines = g.selectAll(".line").data(chart.data());
+			dots = lines.selectAll(".dot").data((d)=>d[list]).exit();
+			lines = lines.exit();
 			if (transition) {
 				lines.transition().delay(transition.delay).duration(transition.duration * 0.3)
 					.style("opacity", 0)
@@ -2531,35 +2584,46 @@ var x, y;
 						}
 						return ret;
 					})
+				dots.transition().delay(transition.delay).duration(transition.duration * 0.3)
+					.style("opacity", 0)
 				lines.transition().delay(transition.delay + transition.duration * 0.3).remove()
+				dots.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
 				lines.remove()
 
 			//Update
-			lines = g.selectAll(".line").data(chart.data())
-				.call(chart.__event_manager.call());
+			lines = g.selectAll(".line").data(chart.data());
+				
+			
+			dots = lines.selectAll(".dot").data((d, i) => {
+				return d[list].map((e) => {
+					e[category] = d[category];
+					e.cat_index = i;
+					return e;
+				})
+			}).call(chart.__event_manager.call());
 
-			function line_format(a,n) {
+			function line_format(a, n) {
 				var ret = `M ${x(a[list][0][key]) + x.bandwidth() / 2} ${y(a[list][0][value])}`;
 				for (var i = 1; i < a[list].length; i++) {
 					ret += `\nL ${x(a[list][i][key]) + x.bandwidth() / 2} ${y(a[list][i][value])}`;
 				}
-				for(var j=i;j<i+n;j++)
-					ret += `\nL ${x(a[list][i-1][key]) + x.bandwidth() / 2} ${y(a[list][i-1][value])}`;
+				for (var j = i; j < i + n; j++)
+					ret += `\nL ${x(a[list][i - 1][key]) + x.bandwidth() / 2} ${y(a[list][i - 1][value])}`;
 				return ret;
 			}
 			if (transition) {
 				lines.interrupt()
 					.select("path")
-					.attr("d",(d,i,j)=>{
+					.attr("d", (d, i, j) => {
 						var last_d = d3.select(j[i]).attr("d");
 						var last_x_y = ([...last_d
 							.matchAll(/[ML] (\d+\.?\d*) (\d+\.?\d*)/g)
 						]);
-						var n = d[list].length-last_x_y.length;
-						var repeat = last_x_y[last_x_y.length-1];
-						for(var k=0;k<n;k++)
-							last_d+=`\nL ${repeat[1]} ${repeat[2]}`;
+						var n = d[list].length - last_x_y.length;
+						var repeat = last_x_y[last_x_y.length - 1];
+						for (var k = 0; k < n; k++)
+							last_d += `\nL ${repeat[1]} ${repeat[2]}`;
 						return last_d;
 					})
 
@@ -2568,22 +2632,27 @@ var x, y;
 					.style("opacity", 1)
 					.select("path")
 					.ease(transition.ease)
-					.attr("d",(d,i,j)=>{
+					.attr("d", (d, i, j) => {
 						var last_d = d3.select(j[i]).attr("d");
 						var last_x_y = ([...last_d
 							.matchAll(/[ML] (\d+\.?\d*) (\d+\.?\d*)/g)
 						]);
-						var n = last_x_y.length-d[list].length;
+						var n = last_x_y.length - d[list].length;
 
-						return line_format(d,n);
+						return line_format(d, n);
 					})
 					.attr("stroke", color)
 					.attr("stroke-width", chart.stroke())
 					.attr("fill", "none")
-				
+					
+				dots.transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.7)
+				.ease(transition.ease)
+					.attr("transform", (d) => `translate(${x(d[key]) + x.bandwidth() / 2},${y(d[value])})`)
+					.call(chart.dots());
+
 				lines
-				.transition().delay(transition.delay + transition.duration)
-				.attr("d",line_format);
+					.transition().delay(transition.delay + transition.duration)
+					.attr("d", line_format);
 
 				/** */
 			} else {
@@ -2722,7 +2791,6 @@ var x, y;
 		 * @return the self chart
 		 * If you dont sent a parameter, you will get the current color rule
 		 */
-		// TODO Corrigir função criada a partir de vetor para colorir as categorias e não os pontos
 		chart.color = function (color) {
 			if (color) {
 				if (color instanceof Function)
@@ -2936,6 +3004,46 @@ var x, y;
 				return this;
 			}
 			return this.__stroke || "2px";
+		}
+
+		chart.__dots = undefined;
+		/**
+		 * Set a behavior to draw dots
+		 * This function will be called inside of dots groups
+		 * this need recive a selection and works with this.
+		 * @param {Function} dots
+		 * @returns the self chart
+		 * If you dont sent a parameter, you will get the current dots function
+		 */
+		chart.dots = function (dots) {
+			if (dots instanceof Function) {
+				this.__dots = dots;
+				return this;
+			}
+			return this.__dots || ((context) => {
+				//General parameters
+				var transition = undefined;
+				if (context.duration)
+					transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
+
+				var selection = context.selection ? context.selection() : context;
+				
+				selection.selectAll("circle").data((d)=>[d]).enter().append("circle").attr("r", 0)
+					.attr("stroke", (d) => (chart.color()(undefined, d.cat_index)))
+					.attr("stroke-width", 2).attr("fill", "white");
+
+				if (transition)
+					selection.select("circle").transition()
+						.delay(transition.delay)
+						.duration(transition.duration)
+						.attr("r", 3)
+						.attr("stroke", (d) => (chart.color()(undefined, d.cat_index)))
+						.attr("stroke-width", 2).attr("fill", "white");
+				else
+					selection.select("circle").attr("r", 3)
+						.attr("stroke", (d) => (chart.color()(undefined, d.cat_index)))
+						.attr("stroke-width", 2).attr("fill", "white");
+			});
 		}
 
 		chart.__event_manager = new jg.EventManager();
