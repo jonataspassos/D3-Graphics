@@ -2136,6 +2136,8 @@ var x, y;
 				data_insert.push(0);
 
 			var pie_insert = (d3.pie())(data_insert)
+			
+			var already = d3.selectAll(".slice")._groups[0].length>0;
 
 			var slices = g.selectAll(".slice")
 				.data(pie_insert).enter()
@@ -2145,8 +2147,8 @@ var x, y;
 				.append("path")
 				.attr("fill", color)
 				.attr("d", arc_gen)
-				.each(function () { this._current = { startAngle: Math.PI * 2, endAngle: Math.PI * 2 }; });
-
+				.each(function () { this._current = { startAngle: already?Math.PI * 2:0, endAngle: already?Math.PI * 2:0 }; });
+			
 			//Remove
 			slices = g.selectAll(".slice").data(chart.data()).exit()
 			if (transition) {
@@ -2546,14 +2548,16 @@ var x, y;
 					})
 				});
 			
+			lines.selectAll(".dot").data((d, i) => d[list])
+			.enter().append("g")
+			.attr("class", (d, i) => `dot dot-${i}`)
+			.attr("transform", (d) => {
+				return `translate(${x(d[key])},${h})`
+			})
+			
 			g.selectAll(".line")
-				.data(chart.data()).selectAll(".dot").data((d, i) => {
-				return d[list].map((e) => {
-					e[category] = d[category];
-					e.cat_index = i;
-					return e;
-				})
-			}).enter().append("g")
+				.data(chart.data()).selectAll(".dot").data((d, i) => d[list])
+				.enter().append("g")
 				.attr("class", (d, i) => `dot dot-${i}`)
 				.attr("transform", (d,i,j) => {
 					var last_d = j[i].parentElement.firstChild.attributes.d.nodeValue;
@@ -2562,7 +2566,7 @@ var x, y;
 						]);
 					return `translate(${last_x_y[1]},${last_x_y[2]})`
 				})
-				.call(chart.dots());
+				//.call(chart.dots());
 
 			//Remove
 			lines = g.selectAll(".line").data(chart.data());
