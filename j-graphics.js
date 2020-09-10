@@ -2496,31 +2496,41 @@ var x, y;
 				y = chart.y_scale().range(chart.y_range());
 
 			var xAxis = chart.x_axis().scale(x),
-				yAxis = chart.y_axis().scale(y);
+				yAxis = chart.y_axis().scale(y),
+				xTicks = d3.axisTop(x).tickSize(h);
 
 			//Insert
-			g.selectAll(".chart-axis").data([{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
+			g.selectAll(".chart-axis").data([{ k: "xT", v: xTicks },{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
 				.attr("class", function (d) { return "chart-axis chart-axis-" + d.k })
-				.attr("transform", function (d) { if (d.k == "x") return `translate(0,${h})` });
+				.attr("transform", function (d) { if (d.k == "x" || d.k=="xT") return `translate(0,${h})` });
 
 			//Update
 			var xAxisGroup = g.select(".chart-axis-x"),
-				yAxisGroup = g.select(".chart-axis-y")
+				yAxisGroup = g.select(".chart-axis-y"),
+				xTAxisGroup = g.select(".chart-axis-xT")
 
 			//Conditional Transition
 			if (transition) {
 				xAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
-					.duration(transition.duration * 0.7)
+					.duration(transition.duration * 0.7).ease(transition.ease)
 					.call(xAxis)
 					.attr("transform", `translate(0,${h})`);
 				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
 					.duration(transition.duration * 0.7)
 					.call(yAxis);
+				xTAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
+					.duration(transition.duration * 0.7).ease(transition.ease)
+					.attr("transform", `translate(0,${h})`)
+					.attr("style","font-size:0px;stroke-dasharray:5 5;opacity:0.4;")
+					.call(xTicks)//.selectAll("text").remove();
 			} else {
 				xAxisGroup.call(xAxis)
 					.attr("transform", `translate(0,${h})`);
 				yAxisGroup
 					.call(yAxis);
+				xTAxisGroup.attr("transform", `translate(0,${h})`)
+					.attr("style","font-size:0px;stroke-dasharray:5 5;opacity:0.4;")
+					.call(xTicks).selectAll("text").remove();
 			}
 
 			//Lines
@@ -2593,7 +2603,7 @@ var x, y;
 				lines.transition().delay(transition.delay + transition.duration * 0.3).remove()
 				dots.transition().delay(transition.delay + transition.duration * 0.3).remove()
 			} else
-				lines.remove()
+				lines.remove(),dots.remove()
 
 			//Update
 			lines = g.selectAll(".line").data(chart.data());
@@ -2672,6 +2682,9 @@ var x, y;
 					})
 					.attr("stroke", color)
 					.attr("fill", "none")
+				dots
+					.attr("transform", (d) => `translate(${x(d[key]) + x.bandwidth() / 2},${y(d[value])})`)
+					.call(chart.dots());
 			}
 
 

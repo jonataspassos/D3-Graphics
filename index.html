@@ -16,7 +16,7 @@
 
         <script>
             //*
-            chart = jg.chart_donut().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+            chart = jg.chart_line().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
                 .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d||d.value}`})
                 //.color(["#4f9887","#922717","steelblue","black","green"])
                 //.stack_mode(-1)
