@@ -3181,13 +3181,52 @@ var x, y;
 			else
 				g.attr("transform", `translate(${margin.left},${margin.top})`);
 
+			var data = chart.data();
+			var extended_data = jg.deep_copy(data);
+			var y_domain = [];
+
+			//Essa função irá cobrir os buracos do intervalo de tempo
+			//Garantirá uma instancia de dados para todos os dias dentro do periodo do domínio
+			(function(){
+				extended_data.map((d)=>{
+					d[key] = new Date(d[key])
+				})
+				extended_data.sort((d1,d2)=>
+					d1[key].getTime()>d2[key].getTime()?1:
+					(d1[key].getTime()<d2[key].getTime()?-1:0))
+				var day,i;
+
+				if(extended_data[0][key].getDay()==6)
+						y_domain.push(extended_data[0][key].getTime());
+
+				for(i=1;i<extended_data.length;i++){
+					day = new Date(extended_data[i-1][key].getTime()+86400000)
+					if(day.getDate()!=extended_data[i][key].getDate()){
+						var obj = new Object();
+						obj[key] = day;
+						extended_data.splice(i, 0, obj);
+					}
+					if(extended_data[i][key].getDay()==6)
+						y_domain.push(extended_data[i][key].getTime());
+				}
+				if(extended_data[i-1][key].getDay()!=6)
+						y_domain.push(extended_data[i-1][key].getTime());
+
+			})()
+
+			console.log(extended_data);
+
+			var h = height-margin.top-margin.bottom;
+			var w = width-margin.left-margin.right;
+
+			var x = d3.scaleBand().domain(jg.range(7)).range([0,w]).paddingInner(0.1);
+			var y = d3.scaleBand().domain(jg.range(y_domain.length)).range([0,h]).paddingInner(0.1);
+			var c_y = function(v){
+				for(var i=y_domain.length-1;i>=0;i--)
+					if(v.getTime()<=y_domain[i] && (i==0 || v.getTime()>y_domain[i-1]))
+						return i;
+			}// y(c_y(d[key])) //transforma data em posição y
 			/*
-
-			var h = chart.y_range()[0];
-
-			var x = chart.x_scale().range(chart.x_range())
-				,
-				y = chart.y_scale().range(chart.y_range());
 
 			var xAxis = chart.x_axis().scale(x),
 				yAxis = chart.y_axis().scale(y);
@@ -3216,17 +3255,20 @@ var x, y;
 				yAxisGroup
 					.call(yAxis);
 			}
+			/** */
 
+			
 			//Bars
 			//Insert
-			var bars = g.selectAll(".bar")
-				.data(chart.data()).enter()
+			var day_cont = g.selectAll(".day-cont")
+				.data(extended_data).enter()
 				.append("g")
-				.attr("class", (d, i) => "bar bar-" + i)
+				.attr("class", (d, i) => "day-cont day-cont-" + i)
 				.attr("transform", function (d) {
-					return `translate(${x(d[key])},${h})`
-				})
-			bars.append("rect").attr("width", x.bandwidth()).attr("fill", color);
+					return `translate(${x(d[key].getDay())},${y(c_y(d[key]))})`
+				}).append("rect").attr("width", x.bandwidth())
+				.attr("height", y.bandwidth()).attr("fill", color);
+			/*
 			//Remove
 			bars = g.selectAll(".bar").data(chart.data()).exit();
 			if (transition) {
