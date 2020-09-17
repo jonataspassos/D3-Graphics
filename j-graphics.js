@@ -1,8 +1,7 @@
-//var temp;
 var x, y;
 (() => {
 	jg = {};
-	jg.y = {}
+	jg.y = {} // temp variables
 
 	/**
 	 * This function copy values of object (JSON Compatible)
@@ -3113,6 +3112,422 @@ var x, y;
 
 		chart.data(data);
 		chart.__id = jg.__chart_line_counter++;
+
+		return chart;
+	}
+
+	jg.__chart_calendar_generic_counter = 0;
+	/**
+	 * Create a calendar generic chart send only the data set with the parameters key and value.
+	 * Some settings can be made, like change the name of parameters of data.
+	 * @param {Array} data dataset with parameters key and value
+	 */
+	jg.chart_calendar_generic = function (data) {
+
+		var chart = function (context) {
+
+			//General parameters
+			var transition = undefined;
+			if (context.duration)
+				transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
+
+			var selection = context.selection ? context.selection() : context;
+
+			if (!chart.inner()) {
+				selection.classed("calendar-generic-chart", true).classed("calendar-generic-chart-" + chart.__id, true);
+				var size_info = jg.size_info(".calendar-generic-chart-" + chart.__id)
+				chart.__size_info = size_info
+				selection.classed("calendar-generic-chart-" + chart.__id, false);
+			}
+
+			var width = chart.width(),		//Width of Chart
+				height = chart.height(),	  //Height of chart
+				margin = chart.margin()					  //Margin of chart
+			if (width < margin.left + margin.right + 40)
+				margin.right = 0, margin.left = -1;
+			if (height < margin.top + margin.bottom + 10)
+				margin.top = 1, margin.bottom = 3;
+			if (height < margin.top + margin.bottom + 2)
+				margin.top = 0, margin.bottom = 0;
+			// TODO vai mas não volta - corrigir depois (eixos)
+			chart.margin(margin);
+			color = chart.color(),					   //Function to define color
+				key = chart.key(),						   //String of key
+				row = chart.row();					   //String of row
+
+			var g;
+			if (!chart.inner()) {
+				//Tags
+				//Insert
+				selection.selectAll("svg").data([null]).enter().append("svg")
+				//Update
+				var svg = selection.select("svg").attr("width", width).attr("height", height);
+				//Insert
+				svg.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`)
+				//Update
+				g = selection.select("g");
+			} else {
+				selection.selectAll("g").data([null]).enter().append("g")
+					.attr("transform", `translate(${margin.left},${margin.top})`);
+				g = selection.select("g");
+			}
+
+
+			//Conditional Transition
+			if (transition)
+				g.transition().delay(transition.delay).duration(transition.duration)
+					.attr("transform", `translate(${margin.left},${margin.top})`);
+			else
+				g.attr("transform", `translate(${margin.left},${margin.top})`);
+
+			/*
+
+			var h = chart.y_range()[0];
+
+			var x = chart.x_scale().range(chart.x_range())
+				,
+				y = chart.y_scale().range(chart.y_range());
+
+			var xAxis = chart.x_axis().scale(x),
+				yAxis = chart.y_axis().scale(y);
+
+			//Insert
+			g.selectAll(".chart-axis").data([{ k: "x", v: xAxis }, { k: "y", v: yAxis }]).enter().append("g")
+				.attr("class", function (d) { return "chart-axis chart-axis-" + d.k })
+				.attr("transform", function (d) { if (d.k == "x") return `translate(0,${h})` });
+
+			//Update
+			var xAxisGroup = g.select(".chart-axis-x"),
+				yAxisGroup = g.select(".chart-axis-y")
+
+			//Conditional Transition
+			if (transition) {
+				xAxisGroup.transition().delay(transition.delay + transition.duration * 0.3)
+					.duration(transition.duration * 0.4)
+					.call(xAxis)
+					.attr("transform", `translate(0,${h})`);
+				yAxisGroup.transition().delay(transition.delay + transition.duration * 0.7)
+					.duration(transition.duration * 0.3)
+					.call(yAxis);
+			} else {
+				xAxisGroup.call(xAxis)
+					.attr("transform", `translate(0,${h})`);
+				yAxisGroup
+					.call(yAxis);
+			}
+
+			//Bars
+			//Insert
+			var bars = g.selectAll(".bar")
+				.data(chart.data()).enter()
+				.append("g")
+				.attr("class", (d, i) => "bar bar-" + i)
+				.attr("transform", function (d) {
+					return `translate(${x(d[key])},${h})`
+				})
+			bars.append("rect").attr("width", x.bandwidth()).attr("fill", color);
+			//Remove
+			bars = g.selectAll(".bar").data(chart.data()).exit();
+			if (transition) {
+				var lastDomain = jg.range(bars._groups[0].length);
+				var lastX = chart.x_scale().domain(lastDomain).range(chart.x_range())
+
+				bars.transition().delay(transition.delay).duration(transition.duration * 0.3)
+					.attr("transform", function (d, i) { return `translate(${lastX(i)},${h})` })
+					.select("rect").attr("height", 0).attr("y", 0);
+				bars.transition().delay(transition.delay + transition.duration * 0.3).remove()
+			} else
+				bars.remove()
+
+			//Update
+			bars = g.selectAll(".bar").data(chart.data())
+				.call(chart.__event_manager.call());
+			if (transition) {
+				bars.interrupt().style("opacity", 1).transition().delay(transition.delay + transition.duration * 0.3).duration(transition.duration * 0.4)
+					.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
+					.select("rect").attr("width", x.bandwidth())
+				bars.transition().delay(transition.delay + transition.duration * 0.7).duration(transition.duration * 0.3).ease(transition.ease)
+					.select("rect").attr("height", function (d) { return h - y(d[value]) })
+					.attr("y", function (d) { return y(d[value]) - h })
+					.attr("fill", color)
+			} else {
+				bars.attr("transform", function (d) { return `translate(${x(d[key])},${h})` })
+					.select("rect").attr("width", x.bandwidth()).attr("height", function (d) { return h - y(d[value]) })
+					.attr("y", function (d) { return y(d[value]) - h })
+					.attr("fill", color)
+			}
+
+			/* */
+		}
+
+		chart.__data = undefined
+		/**
+		 * Set data of chart as a array with parameters
+		 * specifieds in chart.key() and chart.value()
+		 * @param {Array} data list of data to set chart
+		 * @retuerns the self chart
+		 * If you don't send a parameter, you will get the current data of chart
+		 * If current data of chart is undefined of the data param sent is invalid,
+		 * the function will generate a random value to simulate chart
+		 */
+		chart.data = function (data) {
+			var random = false;
+
+			if (data != undefined) {
+				if (data instanceof Array) {
+					this.__data = data;
+					return this;
+				} else
+					random = true;
+			}
+			if (this.__data == undefined)
+				random = true;
+			if (random) {
+				var now = new Date().getTime();
+				
+				this.key("key").row("row")
+					.__data = jg.generate(jg.getRandom(15, 20),//n elements
+						jg.getRandom(0, 5),// min value
+						jg.getRandom(20, 28))// max value
+						.filter(function(elem, index, self) {//Remove repetições
+							return index === self.indexOf(elem);
+						}).map(function (d, i) {
+							return { key: new Date(now - 86400000*d), 
+									row: {key:d,value:jg.getRandom(0, 200)} 
+								}
+						})
+			}
+			return data != undefined ? this : this.__data;
+		}
+
+		chart.__inner = false;
+		/**
+		 * Say inner svg container. If false, this will create a svg inselection called
+		 * If true, this will be created inner of structure selected in a svg.
+		 * @param {boolean} inner mode of creation
+		 * @returns the self chart
+		 * If you don't send a parameter, you will get the current state inner of chart
+		 * when true, the width and heigth parameters should be defined to creation and
+		 * redraw.
+		 */
+		chart.inner = function (inner) {
+			if (inner != undefined) {
+				chart.__inner = inner;
+				return this;
+			} else {
+				return chart.__inner;
+			}
+
+		}
+
+		chart.__width = undefined;
+		/**
+		 * Define the width of graph
+		 * @param {number} width
+		 * @returns the self chart
+		 */
+		chart.width = function (width) {
+			if (width != undefined) {
+				this.__width = width;
+				return this;
+			}
+			return this.__width || (this.__size_info ? this.__size_info.w : undefined);
+		}
+		chart.__height = undefined;
+		/**
+		 * Define the height of graph
+		 * @param {number} height
+		 * @returns the self chart
+		 */
+		chart.height = function (height) {
+			if (height != undefined) {
+				this.__height = height;
+				return this;
+			}
+			return this.__height || (this.__size_info ? this.__size_info.h : undefined);
+		}
+
+		chart.__margin = undefined
+		/**
+		 * Defines a margin around the chart
+		 * @param {Object} send a object with params : top, bottom, left, right
+		 * @returns the self chart
+		 * If you dont sent a parameter, you will get the current margin of chart
+		 */
+		chart.margin = function (d) {
+			if (d) {
+				var t = {}
+				t.top = d.top || this.__margin.top;
+				t.bottom = d.bottom || this.__margin.bottom;
+				t.left = d.left || this.__margin.left;
+				t.right = d.right || this.__margin.right;
+				this.__margin = t;
+				return this;
+			}
+			return chart.__margin || { top: 10, bottom: 20, left: 30, right: 10 };
+		}
+		chart.__color = undefined;
+		/**
+		 * Set a color rule to pattern of the calendar rects.
+		 * This can be a value of color or a function with 
+		 * data(number), index(line), dataset(list of column) as param
+		 * @param {Function,String,Array} color The color rule to pattern of the calendar rects
+		 * @param {boolean} control when true, give total control to param color (be function, String or array)
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current color rule
+		 */
+		chart.color = function (color) {
+			if (color) {
+				if (color instanceof Function)
+					this.__color = color;
+				else if (color instanceof Array)
+					this.__color = ((d, i) => color[i]);
+				else
+					this.__color = color;
+				return this;
+			}
+			return this.__color || ((d, i) => (d3.schemeCategory10[i]));
+		}
+		chart.__key = undefined
+		/**
+		 * Set key index in dataset
+		 * @param {String} key Name of param in data set
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current key indexer
+		 */
+		chart.key = function (key) {
+			if (key) {
+				this.__key = key;
+				return this;
+			}
+			return this.__key || "key";
+		}
+		chart.__row = undefined
+		/**
+		 * Set row index in dataset
+		 * @param {String} row Name of param in data set
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current row indexer
+		 */
+		chart.row = function (row) {
+			if (row) {
+				this.__row = row;
+				return this;
+			}
+			return this.__row || "row";
+		}
+
+		chart.__domain = undefined;
+		/**
+		 * Set domain of scale (period)
+		 * @param {Array} domain specify the domain
+		 * @return the self chart
+		 * If you dont sent a parameter, you will get the current x domain of chart
+		 */
+		chart.domain = function (domain) {
+			var a = this;
+			if (domain) {
+				if (domain instanceof Array) {
+					this.__domain = domain;
+					return this;
+				}
+			} return this.__x_domain ||
+				d3.extent(this.data().map(function (d) {
+					return d[a.key()]
+				}))
+		}
+
+		chart.__rects = undefined;
+		/**
+		 * Set a behavior to draw rects
+		 * This function will be called inside of rect groups
+		 * this need recive a selection and works with this.
+		 * @param {Function} rects
+		 * @returns the self chart
+		 * If you dont sent a parameter, you will get the current rects function
+		 */
+		chart.rects = function (rects) {
+			if (rects instanceof Function) {
+				this.__rects = rects;
+				return this;
+			}
+			return this.__rects || ((context) => {
+				//General parameters
+				var transition = undefined;
+				if (context.duration)
+					transition = { duration: context.duration(), delay: context.delay(), ease: context.ease() };
+
+				var selection = context.selection ? context.selection() : context;
+				console.log(selection.data);
+				
+				//create
+
+				//delete
+				if (transition){
+
+				}else{
+
+				}
+				//update
+				if (transition){
+
+				}else{
+
+				}
+			});
+		}
+
+		chart.__event_manager = new jg.EventManager();
+		/**
+		 * Set a event function
+		 * This function can recive allow parrameters:
+		 * data, index, list, tag
+		 * @param {String} type event type (click,mouseover,mouseout,...)
+		 * @param {function} func functions to execute
+		 * @param {String} name event name(use to retrive and drop the event)
+		 */
+		chart.on = function (type, func, name) {
+			this.__event_manager.event(func, type, name);
+			return this;
+		}
+		/**
+		 * Drop a event using the event name
+		 * @param {String} name event name
+		 */
+		chart.drop_event = function (name) {
+			this.__event_manager.drop(name);
+			return this;
+		}
+
+		chart.__tooltip = jg.tooltip();
+		chart.__tooltip_text = undefined;
+		/**
+		 * Set text function to activate tooltip
+		 * @param {String, Function} text
+		 * 
+		 */
+		chart.tooltip = function (text) {
+			if (text) {
+				this.__tooltip.orientation("bottom-left");
+				this.on("mouseover", (d, i, e, t) => {
+					var p = t.getBoundingClientRect();
+					chart.__tooltip.html(text instanceof Function ? text(d, i, e, t) : text)
+						.show(p.x + p.width, p.y)
+					d3.select(t).style("opacity", 1.0).transition().style("opacity", 0.7)
+				}, "tooltip-in")
+					.on("mouseout", (d, i, e, t) => {
+						chart.__tooltip.hide();
+						d3.select(t).transition().style("opacity", 1)
+					}, "tooltip-out")
+
+				return this;
+			}
+			return this.__tooltip;
+		}
+
+		chart.data(data);
+		chart.__id = jg.__chart_calendar_generic_counter++;
 
 		return chart;
 	}
