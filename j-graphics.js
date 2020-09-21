@@ -3188,17 +3188,31 @@ var x, y;
 			//Essa função irá cobrir os buracos do intervalo de tempo
 			//Garantirá uma instancia de dados para todos os dias dentro do periodo do domínio
 			(function(){
+				//Converte no objeto data do JS
 				extended_data.map((d)=>{
 					d[key] = new Date(d[key])
 				})
-				extended_data.sort((d1,d2)=>
+				extended_data.sort((d1,d2)=>//Ordena
 					d1[key].getTime()>d2[key].getTime()?1:
 					(d1[key].getTime()<d2[key].getTime()?-1:0))
-				var day,i;
+				var day,i,domain;
+				domain = chart.domain();
 
+				//Para um dominio com periodo maior do que os das datas informadas
+				if(domain[0].getTime()<extended_data[0][key].getTime()
+					&& domain[0].getDate()!=extended_data[0][key].getDate())
+					extended_data.unshift(domain[0]);//Adiciona ao inicio
+
+				if(domain[1].getTime()>extended_data[extended_data.length-1][key].getTime()
+					&& domain[1].getDate()!=extended_data[extended_data.length-1][key].getDate())
+					extended_data.push(domain[1]);//Adiciona ao final
+
+				//Inicia a formação do dominio Y se o primeiro dia for sábado
 				if(extended_data[0][key].getDay()==6)
 						y_domain.push(extended_data[0][key].getTime());
 
+				//Percorre os dados adicionando os dias que faltam até o período acabar
+				//Marca o time de todos os sábados no dominio Y
 				for(i=1;i<extended_data.length;i++){
 					day = new Date(extended_data[i-1][key].getTime()+86400000)
 					if(day.getDate()!=extended_data[i][key].getDate()){
@@ -3209,12 +3223,11 @@ var x, y;
 					if(extended_data[i][key].getDay()==6)
 						y_domain.push(extended_data[i][key].getTime());
 				}
+				//Se o ultimo dia não for sábado, forma mais uma linha no dominio y
 				if(extended_data[i-1][key].getDay()!=6)
 						y_domain.push(extended_data[i-1][key].getTime());
 
 			})()
-
-			console.log(extended_data);
 
 			var h = height-margin.top-margin.bottom;
 			var w = width-margin.left-margin.right;
@@ -3225,8 +3238,12 @@ var x, y;
 				for(var i=y_domain.length-1;i>=0;i--)
 					if(v.getTime()<=y_domain[i] && (i==0 || v.getTime()>y_domain[i-1]))
 						return i;
-			}// y(c_y(d[key])) //transforma data em posição y
-			/*
+			}
+			//para transformar data em posição y
+			// y(c_y(d[key])) 
+			
+			// TODO Em aberto ainda, não decidi se vou manter os eixos
+			/* 
 
 			var xAxis = chart.x_axis().scale(x),
 				yAxis = chart.y_axis().scale(y);

@@ -1,72 +1,90 @@
 <html>
-    <head>
-        <script src="d3/d3.js"></script>
-        <!--<script src="https://d3js.org/d3.v5.min.js"></script>-->
-        <script src="j-graphics.js"></script>
-        <style>
-            #vis{
-                width:80%;
-                height: 80%;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="vis"><svg width="400" height="300"></svg></div>
 
+<head>
+    <script src="d3/d3.js"></script>
+    <!--<script src="https://d3js.org/d3.v5.min.js"></script>-->
+    <script src="j-graphics.js"></script>
+    <style>
+        #vis {
+            width: 80%;
+            height: 80%;
+        }
+    </style>
+</head>
 
-        <script>
-            //*
-            chart = jg.chart_calendar_generic().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
-                .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d||d.value}`})
-                //.color(["#4f9887","#922717","steelblue","black","green"])
-                //.stack_mode(-1)
-                //.inner_radius(0.5)
-                //.corner_radius(0.2)
+<body>
+    <!-- De espaço entre os hífens para comentar a região- ->
+    <div id="vis">
+        <svg width="400" height="300"></svg>
+    </div>
+    <!---->
+
+    <!-- De espaço entre os hífens para comentar a região-->
+    <div style="width: 100%; overflow: hidden;">
+        <div class="chart" style="width: 40%; float: left;height:300px"></div>
+        <div class="chart" style="margin-left: 40%;width:60%;height:300px"></div>
+    </div>
+
+    <!---->
+
+    <script>
+        //*
+        chart = jg.chart_bar().on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+            .tooltip((d, i) => { return `<strong>${d.key}</strong></br>Nota: ${d.d || d.value}` })
+        //.color(["#4f9887","#922717","steelblue","black","green"])
+        //.stack_mode(-1)
+        //.inner_radius(0.5)
+        //.corner_radius(0.2)
+
+        d3.selectAll(".chart")
+            .data([true, true])
+            .call(chart);
 
             //chart.inner(true).width(400).height(300);
 
-            /*
-            function repeat() {
-                setTimeout(() => d3.select("#vis")
-                    //.select("svg")
-                    .transition().duration(2000)
-                    .ease(d3.easeBounce)
-                    .call(chart.data(jg.getRandom(0,2)))
-                    .on("end", repeat)
-                ,1000) 
-            }   
-            repeat();/**/
+        /*
+        function repeat() {
+            setTimeout(() => d3.select("#vis")
+                //.select("svg")
+                .transition().duration(2000)
+                .ease(d3.easeBounce)
+                .call(chart.data(jg.getRandom(0,2)))
+                .on("end", repeat)
+            ,1000)
+        }
+        repeat();/**/
 
             //d3.select("#vis").transition().duration(2000).call(chart);
 
-            /*
-            setInterval(() => {
-                d3.select("#vis").call(chart.data(true)
-                    //.stack_mode(-1)
-                )
-            }, 3000)/**/
-            d3.select("#vis").call(chart.data(true));
+        /*
+        setInterval(() => {
+            d3.select("#vis").call(chart.data(true)
+                //.stack_mode(-1)
+            )
+        }, 3000)/**/
+            //d3.select("#vis").call(chart.data(true));
 
 
-            /*
-            var data = [
-                {key:"Professores", list:[63,21]},
-                {key:"Estudantes", list:[536,358]},
-            ]
+        /*
+        var data = [
+            {key:"Professores", list:[63,21]},
+            {key:"Estudantes", list:[536,358]},
+        ]
 
-            var color_vec = ["#9ed5cf","#5eb6aa","#4f9887","#d3989c","#b14954","#922717"];
+        var color_vec = ["#9ed5cf","#5eb6aa","#4f9887","#d3989c","#b14954","#922717"];
 
-            chart = jg.chart_tree_percent().data(data)
-                .on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
-                .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
-                .color(function(d,i){
-                    return color_vec[d.i*3+i];
-                },true);
+        chart = jg.chart_tree_percent().data(data)
+            .on("click", (d, i, e, t) => { console.log([d, i, e, t]) })
+            .tooltip((d,i)=>{return `<strong>${d.key}</strong></br>Nota: ${d.d}`})
+            .color(function(d,i){
+                return color_vec[d.i*3+i];
+            },true);
 
-            window.addEventListener('resize', function(){
-                d3.select("#vis").transition().duration(2000)
-                .call(chart);
-            });/**/
-        </script>
-    </body>
+        window.addEventListener('resize', function(){
+            d3.select("#vis").transition().duration(2000)
+            .call(chart);
+        });/**/
+    </script>
+</body>
+
 </html>
